@@ -166,11 +166,71 @@
   .gate .btn{width:100%;justify-content:center;padding:12px}
   .gate .err{color:#B23A2E;font-size:12.5px;min-height:18px;margin-top:4px}
   .hidden{display:none!important}
+
+  /* checklist floating button */
+  .checkfab{position:absolute;top:14px;right:16px;z-index:30;width:40px;height:40px;border-radius:50%;
+       background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;
+       display:flex;align-items:center;justify-content:center;color:var(--teal-deep)}
+  .checkfab:active{transform:scale(.94)}
+  .checkfab svg{width:21px;height:21px}
+  /* checklist panel */
+  .clpanel{position:fixed;inset:0;z-index:80;background:var(--cream);
+       background-image:radial-gradient(circle at 18% 8%, #F7ECD6 0%, transparent 42%);
+       transform:translateX(100%);transition:transform .28s ease;overflow-y:auto;
+       max-width:480px;margin:0 auto;padding:0 16px 60px}
+  .clpanel.open{transform:none}
+  .clhead{position:sticky;top:0;background:rgba(251,245,234,.94);backdrop-filter:blur(8px);
+       display:flex;align-items:center;gap:10px;padding:14px 2px;margin:0 -2px 8px;border-bottom:1px solid var(--line)}
+  .clhead h2{font-family:'Gowun Batang',serif;font-size:19px;color:var(--teal-deep);flex:1;text-align:center}
+  .clback{font-family:inherit;font-size:14px;font-weight:700;color:var(--teal);background:none;border:none;cursor:pointer;padding:4px 2px}
+  .clspace{width:46px;flex:0 0 auto}
+  .cltabs{display:flex;gap:7px;margin:6px 0 12px}
+  .cltab{flex:1;font-family:inherit;font-size:14px;font-weight:700;color:var(--soft);background:var(--card);
+       border:1px solid var(--line);border-radius:12px;padding:10px 4px;cursor:pointer;position:relative}
+  .cltab.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .cltab .cnt{display:inline-block;font-size:11px;opacity:.75;margin-left:3px}
+  .cladd{display:flex;gap:7px;margin-bottom:10px}
+  .cladd input{flex:1;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:#FCFAF4}
+  .cldiag{font-size:12.5px;margin-bottom:8px;color:var(--soft)}
+  .cldiag.err{color:#B23A2E}
+  .cllist{display:flex;flex-direction:column;gap:7px}
+  .clitem{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);
+       border-radius:12px;padding:12px 13px;box-shadow:var(--shadow);transition:opacity .2s}
+  .clitem .box{width:22px;height:22px;flex:0 0 auto;border-radius:7px;border:2px solid var(--teal);
+       display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+  .clitem .box svg{width:14px;height:14px;opacity:0}
+  .clitem.done .box{background:var(--teal)}
+  .clitem.done .box svg{opacity:1}
+  .clitem .txt{flex:1;font-size:14.5px;color:var(--ink);line-height:1.4;word-break:break-word}
+  .clitem.done .txt{color:#A89E8C;text-decoration:line-through}
+  .clitem .del{background:none;border:none;color:#C9BBA5;font-size:18px;cursor:pointer;padding:2px 4px;flex:0 0 auto}
+  .clitem .del:active{color:#B23A2E}
+  .clempty{font-size:13px;color:var(--soft);text-align:center;padding:24px 10px;line-height:1.6}
+  .cldivider{font-size:11.5px;color:var(--soft);margin:8px 2px 2px;display:flex;align-items:center;gap:8px}
+  .cldivider:before{content:"";flex:1;height:1px;background:var(--line)}
+  .cldivider:after{content:"";flex:1;height:1px;background:var(--line)}
 </style>
 </head>
 <body>
 
 <div class="wrap" id="app">
+
+  <button class="checkfab" id="checkFab" onclick="openChecklist()" title="여행 준비물" aria-label="여행 준비물 체크리스트"></button>
+
+  <div class="clpanel" id="clPanel" aria-hidden="true">
+    <div class="clhead">
+      <button class="clback" onclick="closeChecklist()" aria-label="닫기">‹ 일정</button>
+      <h2>여행 준비물</h2>
+      <span class="clspace"></span>
+    </div>
+    <div class="cltabs" id="clTabs"></div>
+    <div class="cladd">
+      <input id="clInput" type="text" placeholder="준비물 추가…" autocomplete="off">
+      <button class="btn primary" id="clAddBtn" onclick="addCheck()">추가</button>
+    </div>
+    <div class="cldiag" id="clDiag"></div>
+    <div class="cllist" id="clList"></div>
+  </div>
 
   <div class="heroart">
     <svg viewBox="0 0 480 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2026년 제주도 여름휴가 일러스트">
@@ -322,6 +382,8 @@ const CLK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 const EDIT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6"/><path d="M17.5 2.5a2.12 2.12 0 0 1 3 3L11 15l-4 1 1-4Z"/></svg>';
 const PIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>';
 const GRIP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="0.6"/><circle cx="9" cy="12" r="0.6"/><circle cx="9" cy="18" r="0.6"/><circle cx="15" cy="6" r="0.6"/><circle cx="15" cy="12" r="0.6"/><circle cx="15" cy="18" r="0.6"/></svg>';
+const CHECKICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5h9"/><path d="M9 12h9"/><path d="M9 19h9"/><path d="M4 5l1 1 1.5-1.8"/><path d="M4 12l1 1 1.5-1.8"/><path d="M4 19l1 1 1.5-1.8"/></svg>';
+const TICK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>';
 
 let DATA = [];
 
@@ -692,6 +754,115 @@ $("#seedBtn").onclick = async ()=>{
     load();
   }catch(err){ toast("채우기 실패: "+err.message,"err"); }
 };
+
+/* ===================== CHECKLIST ===================== */
+const CL_REST = SUPABASE_URL + "/rest/v1/checklist";
+const PEOPLE = ["동규","새나","단우"];
+let CL_DATA = [];
+let clPerson = PEOPLE[0];
+let clLoaded = false;
+
+document.getElementById("checkFab").innerHTML = CHECKICON;
+
+function openChecklist(){
+  document.getElementById("clPanel").classList.add("open");
+  document.getElementById("clPanel").setAttribute("aria-hidden","false");
+  if(!clLoaded) loadChecklist();
+  else renderChecklist();
+}
+function closeChecklist(){
+  const p = document.getElementById("clPanel");
+  p.classList.remove("open"); p.setAttribute("aria-hidden","true");
+}
+
+async function loadChecklist(){
+  const diag = document.getElementById("clDiag");
+  diag.className="cldiag"; diag.textContent="불러오는 중…";
+  try{
+    const res = await fetch(CL_REST + "?select=*&order=done.asc,sort_order.asc,id.asc", { headers: HEAD });
+    if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    CL_DATA = await res.json();
+    clLoaded = true;
+    diag.textContent = "";
+    renderChecklist();
+  }catch(err){
+    diag.className="cldiag err";
+    diag.innerHTML = "체크리스트를 불러오지 못했어요. <b>checklist</b> 표가 만들어졌는지 확인해 주세요.<br>("+esc(err.message)+")";
+  }
+}
+
+function renderChecklist(){
+  // tabs
+  const tabs = document.getElementById("clTabs");
+  tabs.innerHTML = PEOPLE.map(p=>{
+    const items = CL_DATA.filter(x=>x.person===p);
+    const left = items.filter(x=>!x.done).length;
+    return `<button class="cltab${p===clPerson?' active':''}" onclick="switchPerson('${p}')">${esc(p)}<span class="cnt">${left>0?left:'✓'}</span></button>`;
+  }).join("");
+  // list
+  const list = document.getElementById("clList");
+  const mine = CL_DATA.filter(x=>x.person===clPerson);
+  const todo = mine.filter(x=>!x.done).sort((a,b)=>a.sort_order-b.sort_order || a.id-b.id);
+  const done = mine.filter(x=>x.done).sort((a,b)=>a.sort_order-b.sort_order || a.id-b.id);
+  if(mine.length===0){
+    list.innerHTML = `<div class="clempty">${esc(clPerson)}의 준비물이 아직 없어요.<br>위 칸에 추가해 보세요.</div>`;
+    return;
+  }
+  let html = todo.map(clItemHtml).join("");
+  if(done.length){
+    html += `<div class="cldivider">완료 ${done.length}</div>`;
+    html += done.map(clItemHtml).join("");
+  }
+  list.innerHTML = html;
+}
+
+function clItemHtml(it){
+  return `<div class="clitem${it.done?' done':''}">
+    <div class="box" onclick="toggleCheck(${it.id})">${TICK}</div>
+    <div class="txt">${esc(it.text)}</div>
+    <button class="del" onclick="delCheck(${it.id})" aria-label="삭제">×</button>
+  </div>`;
+}
+
+function switchPerson(p){ clPerson = p; renderChecklist(); }
+
+async function addCheck(){
+  const inp = document.getElementById("clInput");
+  const text = inp.value.trim();
+  if(!text) return;
+  const mine = CL_DATA.filter(x=>x.person===clPerson);
+  const maxOrder = mine.length ? Math.max(...mine.map(x=>x.sort_order||0)) : 0;
+  const body = { person: clPerson, text, done:false, sort_order: maxOrder+1 };
+  inp.value = "";
+  try{
+    const res = await fetch(CL_REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
+    if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    const [row] = await res.json();
+    CL_DATA.push(row); renderChecklist();
+  }catch(err){ toast("추가 실패: "+err.message,"err"); inp.value=text; }
+}
+
+async function toggleCheck(id){
+  const it = CL_DATA.find(x=>x.id===id); if(!it) return;
+  const newDone = !it.done;
+  it.done = newDone; renderChecklist(); buzz(10);
+  try{
+    const res = await fetch(CL_REST + "?id=eq."+id, { method:"PATCH", headers:{...HEAD,"Prefer":"return=minimal"}, body: JSON.stringify({ done:newDone }) });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+  }catch(err){ it.done=!newDone; renderChecklist(); toast("저장 실패: "+err.message,"err"); }
+}
+
+async function delCheck(id){
+  const it = CL_DATA.find(x=>x.id===id); if(!it) return;
+  if(!confirm("'"+it.text+"' 삭제할까요?")) return;
+  try{
+    const res = await fetch(CL_REST + "?id=eq."+id, { method:"DELETE", headers: HEAD });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    CL_DATA = CL_DATA.filter(x=>x.id!==id); renderChecklist();
+  }catch(err){ toast("삭제 실패: "+err.message,"err"); }
+}
+
+document.getElementById("clInput").addEventListener("keydown", e=>{ if(e.key==="Enter") addCheck(); });
 
 /* load immediately */
 load();
