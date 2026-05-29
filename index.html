@@ -742,13 +742,13 @@ async function searchLoc(id){
   box.innerHTML = "";
   let list = [];
 
-  // 1) Kakao 장소 검색 (프록시 경유) — 한국 장소가 가장 잘 나옴
+  // 1) TMAP 장소 검색 (프록시 경유) — 상호명으로 한국 장소가 잘 나옴
   try{
-    const res = await fetch("/api/kakao-search?q=" + encodeURIComponent(raw));
+    const res = await fetch("/api/tmap-search?q=" + encodeURIComponent(raw));
     if(res.ok){
       const data = await res.json();
       if(data.results && data.results.length){
-        list = data.results.map(r=>({ lat:r.lat, lon:r.lon, name:r.name, label:(r.address||r.name), src:"Kakao" }));
+        list = data.results.map(r=>({ lat:r.lat, lon:r.lon, name:r.name, label:(r.address||r.name), src:"TMAP" }));
       }
     }
   }catch(e){ /* proxy not set up yet → fall back to OSM */ }
