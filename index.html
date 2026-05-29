@@ -23,7 +23,7 @@
     line-height:1.65; letter-spacing:-.1px;
   }
   .wrap{max-width:480px;margin:0 auto;padding:0 16px 80px;position:relative}
-  .heroart{margin:16px 0 0;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .heroart{margin:0 0 0;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
   .heroart svg{display:block;width:100%;height:auto}
   .hours{display:flex;align-items:flex-start;gap:6px;margin-top:7px;font-size:11.5px;color:var(--teal-deep);
          background:#EAF3F0;border:1px solid #D5E7E2;border-radius:9px;padding:6px 9px;line-height:1.5}
@@ -168,7 +168,8 @@
   .hidden{display:none!important}
 
   /* checklist floating button */
-  .checkfab{position:absolute;top:14px;right:16px;z-index:30;width:40px;height:40px;border-radius:50%;
+  .topbar{display:flex;justify-content:flex-end;align-items:center;padding:14px 2px 8px}
+  .checkfab{width:40px;height:40px;border-radius:50%;
        background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);cursor:pointer;
        display:flex;align-items:center;justify-content:center;color:var(--teal-deep)}
   .checkfab:active{transform:scale(.94)}
@@ -191,6 +192,8 @@
   .cltab .cnt{display:inline-block;font-size:11px;opacity:.75;margin-left:3px}
   .cladd{display:flex;gap:7px;margin-bottom:10px}
   .cladd input{flex:1;font-family:inherit;font-size:14px;border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:#FCFAF4}
+  .defload{width:100%;justify-content:center;border-style:dashed;color:var(--teal);margin-bottom:10px}
+  .defload.on{background:var(--coral-soft);border-style:solid;border-color:var(--coral);color:var(--coral)}
   .cldiag{font-size:12.5px;margin-bottom:8px;color:var(--soft)}
   .cldiag.err{color:#B23A2E}
   .cllist{display:flex;flex-direction:column;gap:7px}
@@ -215,7 +218,9 @@
 
 <div class="wrap" id="app">
 
-  <button class="checkfab" id="checkFab" onclick="openChecklist()" title="여행 준비물" aria-label="여행 준비물 체크리스트"></button>
+  <div class="topbar">
+    <button class="checkfab" id="checkFab" onclick="openChecklist()" title="여행 준비물" aria-label="여행 준비물 체크리스트"></button>
+  </div>
 
   <div class="clpanel" id="clPanel" aria-hidden="true">
     <div class="clhead">
@@ -228,6 +233,7 @@
       <input id="clInput" type="text" placeholder="준비물 추가…" autocomplete="off">
       <button class="btn primary" id="clAddBtn" onclick="addCheck()">추가</button>
     </div>
+    <button class="btn defload" id="clDefBtn" onclick="toggleDefaults()"></button>
     <div class="cldiag" id="clDiag"></div>
     <div class="cllist" id="clList"></div>
   </div>
@@ -758,6 +764,11 @@ $("#seedBtn").onclick = async ()=>{
 /* ===================== CHECKLIST ===================== */
 const CL_REST = SUPABASE_URL + "/rest/v1/checklist";
 const PEOPLE = ["동규","새나","단우"];
+const DEFAULTS = {
+  "동규": ["신분증","보조 배터리","반팔티","카라티","자켓","바람막이","바지","모자","양말","팬티","면도기","잠옷","핸드폰 충전기","칫솔"],
+  "새나": ["신분증","잠옷","클렌징폼","칫솔","미니고데기","가방","빗","화장품","보조배터리","핸드폰 충전기","로션","손풍기","썬크림","모자","속옷","외출복","양말","렌즈케이스&리뉴"],
+  "단우": ["여권","분유","젖병","젖병세정제&세정솔","전기포트","간식","턱받이","상비약","숟가락","물통","기저귀","엉덩이 세정제","바디워시","잠옷","외출복","바람막이","모자","손수건","수건","장난감","로션","썬크림","백색소음기","무드등","물티슈"]
+};
 let CL_DATA = [];
 let clPerson = PEOPLE[0];
 let clLoaded = false;
@@ -799,13 +810,18 @@ function renderChecklist(){
     const left = items.filter(x=>!x.done).length;
     return `<button class="cltab${p===clPerson?' active':''}" onclick="switchPerson('${p}')">${esc(p)}<span class="cnt">${left>0?left:'✓'}</span></button>`;
   }).join("");
+  // default-load button state: "on" when this person's default items are present
+  const defBtn = document.getElementById("clDefBtn");
+  const hasDefaults = CL_DATA.some(x=>x.person===clPerson && x.is_default);
+  defBtn.className = "btn defload" + (hasDefaults?" on":"");
+  defBtn.textContent = hasDefaults ? "기본 준비물 빼기" : "기본 준비물 불러오기";
   // list
   const list = document.getElementById("clList");
   const mine = CL_DATA.filter(x=>x.person===clPerson);
   const todo = mine.filter(x=>!x.done).sort((a,b)=>a.sort_order-b.sort_order || a.id-b.id);
   const done = mine.filter(x=>x.done).sort((a,b)=>a.sort_order-b.sort_order || a.id-b.id);
   if(mine.length===0){
-    list.innerHTML = `<div class="clempty">${esc(clPerson)}의 준비물이 아직 없어요.<br>위 칸에 추가해 보세요.</div>`;
+    list.innerHTML = `<div class="clempty">${esc(clPerson)}의 준비물이 아직 없어요.<br>위 <b>기본 준비물 불러오기</b>를 누르거나 직접 추가해 보세요.</div>`;
     return;
   }
   let html = todo.map(clItemHtml).join("");
@@ -832,7 +848,7 @@ async function addCheck(){
   if(!text) return;
   const mine = CL_DATA.filter(x=>x.person===clPerson);
   const maxOrder = mine.length ? Math.max(...mine.map(x=>x.sort_order||0)) : 0;
-  const body = { person: clPerson, text, done:false, sort_order: maxOrder+1 };
+  const body = { person: clPerson, text, done:false, sort_order: maxOrder+1, is_default:false };
   inp.value = "";
   try{
     const res = await fetch(CL_REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
@@ -840,6 +856,36 @@ async function addCheck(){
     const [row] = await res.json();
     CL_DATA.push(row); renderChecklist();
   }catch(err){ toast("추가 실패: "+err.message,"err"); inp.value=text; }
+}
+
+async function toggleDefaults(){
+  const btn = document.getElementById("clDefBtn");
+  const has = CL_DATA.some(x=>x.person===clPerson && x.is_default);
+  btn.disabled = true;
+  try{
+    if(!has){
+      // add this person's default items (skip names already present to avoid dupes)
+      const existing = new Set(CL_DATA.filter(x=>x.person===clPerson).map(x=>x.text));
+      const mine = CL_DATA.filter(x=>x.person===clPerson);
+      let order = mine.length ? Math.max(...mine.map(x=>x.sort_order||0)) : 0;
+      const rows = (DEFAULTS[clPerson]||[]).filter(t=>!existing.has(t))
+        .map(t=>({ person:clPerson, text:t, done:false, sort_order:++order, is_default:true }));
+      if(rows.length===0){ btn.disabled=false; renderChecklist(); return; }
+      const res = await fetch(CL_REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(rows) });
+      if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+      const added = await res.json();
+      CL_DATA = CL_DATA.concat(added);
+      buzz(12); toast("기본 준비물을 불러왔어요 ✓","ok");
+    }else{
+      // remove only the default-sourced items for this person
+      const res = await fetch(CL_REST + "?person=eq."+encodeURIComponent(clPerson)+"&is_default=eq.true", { method:"DELETE", headers: HEAD });
+      if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+      CL_DATA = CL_DATA.filter(x=>!(x.person===clPerson && x.is_default));
+      buzz(12); toast("기본 준비물을 뺐어요","ok");
+    }
+    renderChecklist();
+  }catch(err){ toast("처리 실패: "+err.message,"err"); }
+  finally{ btn.disabled=false; }
 }
 
 async function toggleCheck(id){
