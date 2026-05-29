@@ -31,7 +31,7 @@
     line-height:1.65; letter-spacing:-.1px;
   }
   .wrap{max-width:480px;margin:0 auto;padding:0 16px 80px;position:relative}
-  .heroart{margin:0 0 0;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .heroart{margin:0 0 0;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);position:relative}
   .heroart svg{display:block;width:100%;height:auto}
   .hours{display:flex;align-items:flex-start;gap:6px;margin-top:7px;font-size:11.5px;color:var(--teal-deep);
          background:#EAF3F0;border:1px solid #D5E7E2;border-radius:9px;padding:6px 9px;line-height:1.5}
@@ -47,6 +47,9 @@
   .chip b{color:var(--teal);font-weight:700}
   .chip.dday{background:var(--coral);color:#fff;border-color:var(--coral);font-weight:700}
   .chip.dday:empty{display:none}
+  .heroart .dday{position:absolute;top:12px;left:12px;z-index:5;background:var(--coral);color:#fff;
+       font-size:13px;font-weight:700;border-radius:999px;padding:6px 13px;box-shadow:0 3px 10px rgba(224,122,69,.4);letter-spacing:.3px}
+  .heroart .dday:empty{display:none}
   /* now / next highlight */
   .stop.isnow .card{border-color:var(--coral);box-shadow:0 0 0 2px var(--coral-soft),var(--shadow)}
   .nowtag{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--coral);border-radius:6px;padding:1px 7px;margin-left:auto;flex:0 0 auto;white-space:nowrap}
@@ -257,6 +260,7 @@
   </div>
 
   <div class="heroart">
+    <span class="dday" id="ddayChip"></span>
     <svg viewBox="0 0 480 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2026년 제주도 여름휴가 일러스트">
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
@@ -332,7 +336,6 @@
     <div class="kicker">Jeju Family Trip</div>
     <h1>2026년 제주도 여름휴가<span class="small">우리 세 식구의 3박 4일</span></h1>
     <div class="meta">
-      <span class="chip dday" id="ddayChip"></span>
       <span class="chip"><b>2026.7.17</b> 금 ~ <b>7.20</b> 월</span>
       <span class="chip">3박 4일</span>
       <span class="chip">부부 + 아들 <b>22개월</b></span>
