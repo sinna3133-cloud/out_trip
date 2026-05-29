@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>2026년 제주도 여름휴가 · 3박4일</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF5EA; --cream2:#F4EAD6; --ink:#2A2722; --soft:#7A7064;
+    --teal:#176B68; --teal-deep:#0E4F4C; --coral:#E07A45; --coral-soft:#F6E2D2;
+    --card:#FFFFFF; --line:#E8DCC5; --shadow:0 6px 22px rgba(42,39,34,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Gowun Dodum',sans-serif; color:var(--ink);
+    background:var(--cream);
+    background-image:radial-gradient(circle at 18% 8%, #F7ECD6 0%, transparent 42%),
+                     radial-gradient(circle at 92% 22%, #EDF1E6 0%, transparent 38%);
+    line-height:1.65; letter-spacing:-.1px;
+  }
+  .wrap{max-width:480px;margin:0 auto;padding:0 16px 80px;position:relative}
+  .heroart{margin:16px 0 0;border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .heroart svg{display:block;width:100%;height:auto}
+  .hours{display:flex;align-items:flex-start;gap:6px;margin-top:7px;font-size:11.5px;color:var(--teal-deep);
+         background:#EAF3F0;border:1px solid #D5E7E2;border-radius:9px;padding:6px 9px;line-height:1.5}
+  .hours svg{width:13px;height:13px;flex:0 0 auto;margin-top:1.5px;opacity:.8}
+
+  .hero{padding:22px 4px 18px;position:relative}
+  .kicker{font-size:12px;letter-spacing:3px;color:var(--coral);font-weight:700;text-transform:uppercase}
+  .hero h1{font-family:'Gowun Batang',serif;font-weight:700;font-size:34px;line-height:1.12;margin:8px 0 6px;color:var(--teal-deep)}
+  .hero h1 .small{display:block;font-size:18px;color:var(--ink);font-weight:400;margin-top:6px}
+  .meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+  .chip{font-size:12.5px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--soft);box-shadow:var(--shadow)}
+  .chip b{color:var(--teal);font-weight:700}
+
+  .flights{margin-top:18px;background:var(--teal-deep);color:#F6EFE0;border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
+  .flights .fl{display:flex;align-items:center;justify-content:space-between;font-size:14px;padding:7px 0}
+  .flights .fl+.fl{border-top:1px dashed rgba(246,239,224,.25)}
+  .flights .dir{font-size:11.5px;letter-spacing:1px;color:#9FD3CE;font-weight:700}
+  .flights .rt{text-align:right}
+  .flights .big{font-family:'Gowun Batang',serif;font-size:16px}
+
+  .nav{position:sticky;top:0;z-index:20;background:rgba(251,245,234,.92);backdrop-filter:blur(8px);
+       margin:22px -16px 8px;padding:10px 16px;border-bottom:1px solid var(--line);
+       display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a{flex:0 0 auto;font-size:13px;text-decoration:none;color:var(--soft);
+         border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font-weight:700;cursor:pointer}
+  .nav a .d{color:var(--coral)}
+
+  .day{margin-top:26px}
+  .dayhead{display:flex;align-items:baseline;gap:10px;padding:0 2px 4px}
+  .daynum{font-family:'Gowun Batang',serif;font-size:30px;color:var(--coral);font-weight:700;line-height:1}
+  .daymeta h2{font-family:'Gowun Batang',serif;font-size:18px;color:var(--teal-deep);font-weight:700}
+  .daymeta .date{font-size:12.5px;color:var(--soft)}
+
+  .tl{position:relative;padding-left:6px}
+  .stop{position:relative;padding:0 0 4px 26px;margin-bottom:14px}
+  .stop:before{content:"";position:absolute;left:6px;top:24px;bottom:-14px;width:2px;background:var(--line)}
+  .stop:last-child:before{display:none}
+  .dot{position:absolute;left:0;top:7px;width:14px;height:14px;border-radius:50%;background:var(--teal);border:3px solid var(--cream);box-shadow:0 0 0 1.5px var(--teal)}
+  .stop.lodge .dot{background:var(--coral);box-shadow:0 0 0 1.5px var(--coral)}
+  .drive{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--soft);margin:0 0 6px 2px}
+  .drive svg{width:13px;height:13px;flex:0 0 auto;opacity:.7}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;box-shadow:var(--shadow)}
+  .stop.lodge .card{background:#FFFBF5;border-color:var(--coral-soft)}
+  .top{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+  .time{font-family:'Gowun Batang',serif;font-weight:700;font-size:14px;color:var(--coral);flex:0 0 auto}
+  .name{font-size:16px;font-weight:700;color:var(--ink)}
+  .tag{font-size:10.5px;color:var(--teal);border:1px solid var(--line);border-radius:6px;padding:1px 6px;margin-left:auto;flex:0 0 auto;white-space:nowrap}
+  .note{font-size:13px;color:var(--soft);margin-top:4px}
+  .go{display:inline-flex;align-items:center;gap:6px;margin-top:10px;text-decoration:none;
+      font-size:12.5px;font-weight:700;color:#fff;background:var(--teal);border-radius:10px;padding:7px 12px}
+  .go:active{background:var(--teal-deep)}
+  .go svg{width:13px;height:13px}
+
+  /* edit controls */
+  .rowbtns{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+  .btn{font-family:inherit;font-size:12.5px;font-weight:700;border-radius:10px;padding:7px 12px;border:1px solid var(--line);
+       background:var(--card);color:var(--soft);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .btn.coral{background:var(--coral);color:#fff;border-color:var(--coral)}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:#B23A2E;border-color:#E6C6C0}
+  .addstop{margin:2px 0 6px 26px}
+  .addstop .btn{width:100%;justify-content:center;border-style:dashed;padding:10px}
+
+  /* edit form */
+  .ef{margin-top:10px;border-top:1px dashed var(--line);padding-top:11px;display:grid;gap:8px}
+  .ef label{font-size:11.5px;color:var(--soft);font-weight:700;display:block;margin-bottom:3px}
+  .ef input,.ef textarea,.ef select{width:100%;font-family:inherit;font-size:13.5px;color:var(--ink);
+       border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:#FCFAF4;resize:vertical}
+  .ef textarea{min-height:54px;line-height:1.5}
+  .ef .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ef .chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink)}
+  .ef .chk input{width:auto}
+
+  /* status / banners */
+  .statusbar{position:fixed;left:0;right:0;bottom:0;z-index:50;font-size:12.5px;text-align:center;
+       padding:9px 12px;color:#fff;transform:translateY(120%);transition:transform .3s;font-weight:700}
+  .statusbar.show{transform:none}
+  .statusbar.ok{background:var(--teal)}
+  .statusbar.err{background:#B23A2E}
+  .statusbar.info{background:var(--teal-deep)}
+
+  .diag{margin:14px 0;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.6}
+  .diag.ok{background:#E3F1EC;border:1px solid #CDE6DE;color:#0E4F4C}
+  .diag.err{background:#FBEAE6;border:1px solid #EDC9C0;color:#9A3526}
+  .diag.load{background:#FBF3DF;border:1px solid #EBDDB4;color:#7A5B12}
+  .diag b{font-weight:700}
+
+  .editbar{display:flex;align-items:center;gap:9px;margin:18px 2px 4px;flex-wrap:wrap}
+  .editbar .lbl{font-size:13px;color:var(--soft)}
+  .switch{position:relative;display:inline-block;width:48px;height:27px;flex:0 0 auto}
+  .switch input{opacity:0;width:0;height:0}
+  .slider{position:absolute;inset:0;background:#D9CFBC;border-radius:999px;transition:.2s;cursor:pointer}
+  .slider:before{content:"";position:absolute;height:21px;width:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  .switch input:checked+.slider{background:var(--coral)}
+  .switch input:checked+.slider:before{transform:translateX(21px)}
+
+  .seedwrap{margin:14px 0}
+  .seedwrap .btn{width:100%;justify-content:center;padding:12px}
+
+  .tips{margin-top:30px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px 8px;box-shadow:var(--shadow)}
+  .tips h3{font-family:'Gowun Batang',serif;color:var(--teal-deep);font-size:16px;margin-bottom:10px}
+  .tips li{list-style:none;font-size:13px;color:var(--soft);padding:0 0 10px 18px;position:relative;line-height:1.6}
+  .tips li:before{content:"";position:absolute;left:2px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--coral)}
+  .tips b{color:var(--ink);font-weight:700}
+  .foot{text-align:center;font-size:11.5px;color:var(--soft);margin-top:24px;line-height:1.7}
+  .foot .wave{font-family:'Gowun Batang',serif;color:var(--teal);font-size:14px}
+
+  /* password gate */
+  .gate{position:fixed;inset:0;z-index:100;background:var(--cream);display:flex;align-items:center;justify-content:center;padding:24px}
+  .gate .box{max-width:340px;width:100%;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 22px;box-shadow:var(--shadow)}
+  .gate h2{font-family:'Gowun Batang',serif;color:var(--teal-deep);font-size:22px;margin-bottom:6px}
+  .gate p{font-size:13px;color:var(--soft);margin-bottom:16px}
+  .gate input{width:100%;font-family:inherit;font-size:15px;text-align:center;border:1px solid var(--line);border-radius:12px;padding:12px;background:#FCFAF4;margin-bottom:10px}
+  .gate .btn{width:100%;justify-content:center;padding:12px}
+  .gate .err{color:#B23A2E;font-size:12.5px;min-height:18px;margin-top:4px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+
+  <div class="heroart">
+    <svg viewBox="0 0 480 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2026년 제주도 여름휴가 일러스트">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FBF5EA"/><stop offset="0.55" stop-color="#E9F2E8"/><stop offset="1" stop-color="#CDE7E1"/>
+        </linearGradient>
+        <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="#FBD79A"/><stop offset="1" stop-color="#F6B65E"/>
+        </radialGradient>
+      </defs>
+      <rect x="0" y="0" width="480" height="240" fill="url(#sky)"/>
+      <circle cx="406" cy="56" r="46" fill="#F6B65E" opacity="0.18"/>
+      <circle cx="406" cy="56" r="26" fill="url(#sun)"/>
+      <path d="M40 54 Q110 30 168 58" fill="none" stroke="#B9C9C2" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="2 7"/>
+      <g transform="translate(40 54) rotate(18)">
+        <path d="M-9 0 L10 -3 L13 0 L10 3 Z" fill="#2A2722"/>
+        <path d="M-1 -1 L-7 -8 L-3 -1 Z" fill="#2A2722"/>
+        <path d="M-1 1 L-7 8 L-3 1 Z" fill="#2A2722"/>
+      </g>
+      <g fill="#FFFFFF" opacity="0.9">
+        <ellipse cx="120" cy="92" rx="26" ry="13"/><ellipse cx="138" cy="86" rx="18" ry="11"/>
+        <ellipse cx="320" cy="70" rx="22" ry="11"/><ellipse cx="335" cy="65" rx="15" ry="9"/>
+      </g>
+      <path d="M150 178 Q250 70 360 178 Z" fill="#5BA59C"/>
+      <path d="M40 182 Q150 96 260 182 Z" fill="#3C8C84"/>
+      <path d="M118 132 Q150 96 182 132 Q150 118 118 132 Z" fill="#EAF3EE" opacity="0.85"/>
+      <rect x="0" y="176" width="480" height="30" fill="#46A39A"/>
+      <g fill="#FFFFFF" opacity="0.55">
+        <path d="M0 180 q15 -7 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 v4 h-480 z"/>
+      </g>
+      <ellipse cx="244" cy="214" rx="120" ry="24" fill="#EDDFBF"/>
+      <ellipse cx="244" cy="214" rx="120" ry="24" fill="#000" opacity="0.04"/>
+      <rect x="160" y="114" width="80" height="100" rx="34" fill="#F1ECDF"/>
+      <ellipse cx="200" cy="94" rx="29" ry="27" fill="#2B2620"/>
+      <circle cx="200" cy="96" r="24" fill="#F4D4B6"/>
+      <path d="M177 92 Q200 62 223 92 Q214 78 200 77 Q186 78 177 92 Z" fill="#2B2620"/>
+      <circle cx="191" cy="96" r="2.4" fill="#3A332B"/><circle cx="208" cy="97" r="2.4" fill="#3A332B"/>
+      <ellipse cx="199" cy="110" rx="3.4" ry="4.8" fill="#B9603F"/>
+      <rect x="254" y="120" width="80" height="94" rx="34" fill="#1E2B45"/>
+      <path d="M281 120 q11 11 22 0 l0 9 q-11 7 -22 0 z" fill="#E8E2D2"/>
+      <ellipse cx="292" cy="100" rx="30" ry="29" fill="#241F1A"/>
+      <rect x="264" y="100" width="11" height="44" rx="5.5" fill="#241F1A"/>
+      <rect x="313" y="100" width="11" height="44" rx="5.5" fill="#241F1A"/>
+      <circle cx="292" cy="100" r="24" fill="#F4D4B6"/>
+      <path d="M269 98 Q292 70 315 98 Q304 84 292 83 Q280 84 269 98 Z" fill="#241F1A"/>
+      <ellipse cx="322" cy="96" rx="9" ry="13" fill="#241F1A"/>
+      <circle cx="283" cy="101" r="2.4" fill="#3A332B"/><circle cx="301" cy="101" r="2.4" fill="#3A332B"/>
+      <path d="M286 110 Q292 115 298 110" fill="none" stroke="#B9603F" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="278" cy="108" r="3" fill="#F3B59B" opacity="0.7"/>
+      <rect x="213" y="170" width="62" height="44" rx="21" fill="#DCEDE0"/>
+      <circle cx="244" cy="153" r="23" fill="#F6D9BC"/>
+      <path d="M236 136 Q244 126 252 136 Q244 132 236 136 Z" fill="#3A2F26"/>
+      <circle cx="236" cy="154" r="4.2" fill="#2A241E"/><circle cx="237.4" cy="152.6" r="1.3" fill="#fff"/>
+      <circle cx="252" cy="154" r="4.2" fill="#2A241E"/><circle cx="253.4" cy="152.6" r="1.3" fill="#fff"/>
+      <circle cx="231" cy="160" r="3" fill="#F3A98C" opacity="0.75"/><circle cx="257" cy="160" r="3" fill="#F3A98C" opacity="0.75"/>
+      <path d="M239 163 Q244 167 249 163" fill="none" stroke="#B9603F" stroke-width="2" stroke-linecap="round"/>
+      <rect x="231" y="190" width="30" height="13" rx="4" fill="#2F9BD4"/>
+      <rect x="237" y="185" width="14" height="7" rx="3" fill="#5DBCE9"/>
+      <circle cx="238" cy="204" r="3.2" fill="#244A5E"/><circle cx="254" cy="204" r="3.2" fill="#244A5E"/>
+      <circle cx="231" cy="194" r="4" fill="#F6D9BC"/><circle cx="261" cy="194" r="4" fill="#F6D9BC"/>
+      <circle cx="44" cy="214" r="14" fill="#F39A4B"/>
+      <path d="M44 200 q6 -7 12 -4 q-4 5 -12 5 z" fill="#5AA46A"/>
+      <g transform="translate(432 206)">
+        <ellipse cx="0" cy="20" rx="16" ry="6" fill="#000" opacity="0.05"/>
+        <rect x="-13" y="-6" width="26" height="26" rx="10" fill="#9AA3A0"/>
+        <circle cx="0" cy="-12" r="13" fill="#A8B0AD"/>
+        <path d="M-13 -16 q13 -10 26 0 l0 5 q-13 -7 -26 0 z" fill="#878F8C"/>
+        <circle cx="-5" cy="-12" r="1.8" fill="#5C625F"/><circle cx="5" cy="-12" r="1.8" fill="#5C625F"/>
+      </g>
+    </svg>
+  </div>
+
+  <header class="hero">
+    <div class="kicker">Jeju Family Trip</div>
+    <h1>2026년 제주도<br>여름휴가<span class="small">우리 세 식구의 3박 4일</span></h1>
+    <div class="meta">
+      <span class="chip"><b>2026.7.17</b> 금 ~ <b>7.20</b> 월</span>
+      <span class="chip">3박 4일</span>
+      <span class="chip">부부 + 아들 <b>22개월</b></span>
+      <span class="chip">렌트카</span>
+    </div>
+    <div class="flights">
+      <div class="fl">
+        <div><div class="dir">가는 편 · 7/17 (금)</div><div class="big">인천 → 제주</div></div>
+        <div class="rt"><div class="big">18:00</div><div class="dir">제헌절 공휴일</div></div>
+      </div>
+      <div class="fl">
+        <div><div class="dir">오는 편 · 7/20 (월)</div><div class="big">제주 → 인천</div></div>
+        <div class="rt"><div class="big">15:00</div><div class="dir">반납 1시간 전 도착</div></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- connection diagnostic -->
+  <div id="diag" class="diag load"><b>일정 불러오는 중…</b> 데이터베이스에 연결하고 있어요.</div>
+
+  <!-- seed button (shows only when table empty) -->
+  <div class="seedwrap hidden" id="seedWrap">
+    <button class="btn coral" id="seedBtn">처음 한 번: 지금 일정 18곳 채워넣기</button>
+  </div>
+
+  <!-- edit mode toggle -->
+  <div class="editbar">
+    <span class="lbl">편집 모드</span>
+    <label class="switch"><input type="checkbox" id="editToggle"><span class="slider"></span></label>
+    <span class="lbl" id="editHint">끄면 보기 전용</span>
+  </div>
+
+  <nav class="nav">
+    <a onclick="jump('d1')"><span class="d">D1</span> 도착</a>
+    <a onclick="jump('d2')"><span class="d">D2</span> 박물관·동물·숲</a>
+    <a onclick="jump('d3')"><span class="d">D3</span> 성산·구좌</a>
+    <a onclick="jump('d4')"><span class="d">D4</span> 해변·공항</a>
+  </nav>
+
+  <div id="days"></div>
+
+  <section class="tips">
+    <h3>알아두면 좋은 것</h3>
+    <ul>
+      <li>이동 시간은 <b>구글맵 차량 기준 대략치</b>예요. 7월 성수기 + 제헌절 연휴라 실제론 더 걸릴 수 있으니, 출발 전 카카오내비/구글맵으로 한 번 더 확인.</li>
+      <li><b>국립제주박물관은 월요일 휴관</b>이라 2일차에 넣었어요. (4일차가 월요일)</li>
+      <li>3일차 광치기해변, 4일차 동문시장은 <b>아이 컨디션 보고 생략 가능</b>한 선택 코스.</li>
+      <li>비 오거나 너무 더우면, 성산의 <b>빛의 벙커</b>(실내 미디어아트)를 3일차 광치기 대신 넣기 좋아요.</li>
+      <li><b>편집 모드</b>를 켜면 장소를 수정·추가·삭제할 수 있고, 저장하면 가족 모두에게 반영돼요.</li>
+    </ul>
+  </section>
+
+  <div class="foot">
+    <div class="wave">우리 셋, 좋은 여행 되자 🌊</div>
+    각 장소의 <b>길찾기</b>를 누르면 지도 앱이 바로 열려요.
+  </div>
+</div>
+
+<div class="statusbar" id="status"></div>
+
+<script>
+/* ====== 설정 (가족 암호만 원하면 바꾸세요) ====== */
+const SUPABASE_URL = "https://zdlquzfktfjdblnpugdf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_47gcgmB2wMOpm1tIrgn8hQ_OeTYpZWA";
+/* ============================================== */
+
+const REST = SUPABASE_URL + "/rest/v1/schedule";
+const HEAD = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
+const DAYMETA = {
+  1:{t:"도착 · 공항 인근 1박", d:"7월 17일 (금)"},
+  2:{t:"박물관 · 동물체험 · 숲", d:"7월 18일 (토)"},
+  3:{t:"성산 · 구좌 한 바퀴", d:"7월 19일 (일)"},
+  4:{t:"해변 · 시장 · 공항", d:"7월 20일 (월)"}
+};
+const CAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5l1.6-4.3A2 2 0 0 1 6.5 6h11a2 2 0 0 1 1.9 1.2L21 11.5"/><rect x="2.5" y="11.5" width="19" height="4.5" rx="1.2"/><circle cx="7" cy="17.5" r="1.4"/><circle cx="17" cy="17.5" r="1.4"/></svg>';
+const CLK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+
+let DATA = [];
+let editMode = false;
+
+const $ = s => document.querySelector(s);
+const esc = s => (s==null?"":String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(msg, kind){ const b=$("#status"); b.textContent=msg; b.className="statusbar show "+(kind||"info"); clearTimeout(b._t); b._t=setTimeout(()=>b.className="statusbar "+(kind||"info"),2600); }
+function jump(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:"smooth"}); }
+
+/* ---------- edit toggle ---------- */
+$("#editToggle").addEventListener("change", e=>{
+  editMode = e.target.checked;
+  $("#editHint").textContent = editMode ? "켜짐 · 수정·추가·삭제 가능" : "끄면 보기 전용";
+  render();
+});
+
+/* ---------- load from Supabase ---------- */
+async function load(){
+  const diag = $("#diag");
+  diag.className="diag load"; diag.innerHTML="<b>일정 불러오는 중…</b> 데이터베이스에 연결하고 있어요.";
+  try{
+    const res = await fetch(REST + "?select=*&order=day.asc,sort_order.asc", { headers: HEAD });
+    if(!res.ok){ throw new Error("HTTP " + res.status + " — " + (await res.text())); }
+    DATA = await res.json();
+    if(DATA.length === 0){
+      diag.className="diag ok"; diag.innerHTML="<b>연결 성공!</b> 아직 일정이 비어 있어요. 아래 버튼으로 처음 일정을 채워넣으세요.";
+      $("#seedWrap").classList.remove("hidden");
+    } else {
+      diag.className="diag ok"; diag.innerHTML="<b>연결 성공 ✓</b> 일정 "+DATA.length+"곳을 불러왔어요. 가족이 함께 편집할 수 있어요.";
+      $("#seedWrap").classList.add("hidden");
+    }
+    render();
+  }catch(err){
+    diag.className="diag err";
+    diag.innerHTML="<b>연결 실패</b><br>"+esc(err.message)+"<br><br>설정의 URL·키를 다시 확인하거나, Supabase에서 schedule 표와 권한(policy)이 만들어졌는지 확인하세요.";
+  }
+}
+
+/* ---------- render ---------- */
+function render(){
+  const wrap = $("#days");
+  wrap.innerHTML = "";
+  for(const day of [1,2,3,4]){
+    const stops = DATA.filter(r=>r.day===day);
+    const sec = document.createElement("section");
+    sec.className="day"; sec.id="d"+day;
+    const m = DAYMETA[day];
+    sec.innerHTML = `<div class="dayhead"><div class="daynum">${day}</div>
+      <div class="daymeta"><h2>${esc(m.t)}</h2><div class="date">${esc(m.d)}</div></div></div>
+      <div class="tl" id="tl${day}"></div>
+      <div class="addstop ${editMode?'':'hidden'}"><button class="btn ghost" onclick="addStop(${day})">+ 이 날에 장소 추가</button></div>`;
+    wrap.appendChild(sec);
+    const tl = sec.querySelector("#tl"+day);
+    stops.forEach(s => tl.appendChild(stopEl(s)));
+    if(stops.length===0){ tl.innerHTML='<div class="note" style="padding-left:26px">아직 장소가 없어요.</div>'; }
+  }
+}
+
+function stopEl(s){
+  const d = document.createElement("div");
+  d.className = "stop" + (s.is_lodge ? " lodge" : "");
+  const drive = s.drive ? `<div class="drive">${CAR} ${esc(s.drive)}</div>` : "";
+  const hours = s.hours ? `<div class="hours">${CLK}<span>${esc(s.hours)}</span></div>` : "";
+  const go = s.maps_query ? `<a class="go" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.maps_query)}" target="_blank">길찾기 ↗</a>` : "";
+  const editBtns = editMode ? `<div class="rowbtns">
+       <button class="btn" onclick="openEdit(${s.id})">✎ 수정</button>
+       <button class="btn danger" onclick="delStop(${s.id})">삭제</button></div>` : "";
+  d.innerHTML = `<span class="dot"></span>${drive}
+    <div class="card" id="card${s.id}">
+      <div class="top"><span class="time">${esc(s.time_label)}</span><span class="name">${esc(s.name)}</span>${s.tag?`<span class="tag">${esc(s.tag)}</span>`:""}</div>
+      ${s.note?`<div class="note">${esc(s.note)}</div>`:""}
+      ${hours}${go}${editBtns}
+    </div>`;
+  return d;
+}
+
+/* ---------- edit form ---------- */
+function openEdit(id){
+  const s = DATA.find(r=>r.id===id); if(!s) return;
+  const card = $("#card"+id);
+  if(card.querySelector(".ef")) return; // already open
+  const f = document.createElement("div");
+  f.className="ef";
+  f.innerHTML = `
+    <div class="two">
+      <div><label>시간</label><input id="f_time" value="${esc(s.time_label)}" placeholder="09:00"></div>
+      <div><label>태그</label><input id="f_tag" value="${esc(s.tag)}" placeholder="오전 / 점심 / 숙소"></div>
+    </div>
+    <div><label>장소 이름</label><input id="f_name" value="${esc(s.name)}"></div>
+    <div><label>메모</label><textarea id="f_note">${esc(s.note)}</textarea></div>
+    <div><label>운영시간 (선택)</label><textarea id="f_hours">${esc(s.hours)}</textarea></div>
+    <div class="two">
+      <div><label>이동 (선택)</label><input id="f_drive" value="${esc(s.drive)}" placeholder="약 20분"></div>
+      <div><label>지도 좌표/검색어 (선택)</label><input id="f_maps" value="${esc(s.maps_query)}" placeholder="33.50,126.49"></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="f_lodge" ${s.is_lodge?"checked":""}> 숙소(코랄색)로 표시</label>
+    <div class="rowbtns">
+      <button class="btn primary" onclick="saveEdit(${id})">저장</button>
+      <button class="btn ghost" onclick="render()">취소</button>
+    </div>`;
+  card.appendChild(f);
+}
+
+async function saveEdit(id){
+  const body = {
+    time_label: $("#f_time").value.trim(),
+    tag: $("#f_tag").value.trim(),
+    name: $("#f_name").value.trim(),
+    note: $("#f_note").value.trim(),
+    hours: $("#f_hours").value.trim(),
+    drive: $("#f_drive").value.trim(),
+    maps_query: $("#f_maps").value.trim(),
+    is_lodge: $("#f_lodge").checked,
+    updated_at: new Date().toISOString()
+  };
+  if(!body.name){ toast("장소 이름은 비울 수 없어요","err"); return; }
+  try{
+    const res = await fetch(REST + "?id=eq."+id, { method:"PATCH", headers:{...HEAD, "Prefer":"return=representation"}, body: JSON.stringify(body) });
+    if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    const [row] = await res.json();
+    const i = DATA.findIndex(r=>r.id===id); if(i>=0) DATA[i]=row;
+    render(); toast("저장됐어요 ✓","ok");
+  }catch(err){ toast("저장 실패: "+err.message,"err"); }
+}
+
+async function addStop(day){
+  const stops = DATA.filter(r=>r.day===day);
+  const maxOrder = stops.length ? Math.max(...stops.map(s=>s.sort_order||0)) : 0;
+  const body = { day, sort_order: maxOrder+1, time_label:"", name:"새 장소", tag:"", note:"", hours:"", drive:"", maps_query:"", is_lodge:false };
+  try{
+    const res = await fetch(REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
+    if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    const [row] = await res.json();
+    DATA.push(row); render();
+    openEdit(row.id);
+    document.getElementById("card"+row.id)?.scrollIntoView({behavior:"smooth",block:"center"});
+    toast("장소를 추가했어요. 내용을 채워주세요.","ok");
+  }catch(err){ toast("추가 실패: "+err.message,"err"); }
+}
+
+async function delStop(id){
+  const s = DATA.find(r=>r.id===id);
+  if(!confirm("'"+(s?s.name:"")+"' 장소를 삭제할까요?")) return;
+  try{
+    const res = await fetch(REST + "?id=eq."+id, { method:"DELETE", headers: HEAD });
+    if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    DATA = DATA.filter(r=>r.id!==id); render(); toast("삭제됐어요","ok");
+  }catch(err){ toast("삭제 실패: "+err.message,"err"); }
+}
+
+/* ---------- seed (first time) ---------- */
+const SEED = [{"day": 1, "sort_order": 1, "time_label": "19:10", "name": "제주국제공항 도착", "tag": "렌트카", "note": "수령에 약 1시간. 20:15쯤 출발 예상.", "hours": "", "drive": "", "maps_query": "33.5070772,126.4934311", "is_lodge": false}, {"day": 1, "sort_order": 2, "time_label": "20:30", "name": "신의한근", "tag": "저녁", "note": "삼양 흑돼지. 도착이 늦으니 영업시간·예약 전화 확인. 너무 늦으면 호텔 근처 간단식으로 대체.", "hours": "17:00–22:00 · 매주 일요일 휴무 · 브레이크타임 없음 (금요일이라 영업 ✓)", "drive": "공항에서 약 18분", "maps_query": "33.5247698,126.5910124", "is_lodge": false}, {"day": 1, "sort_order": 3, "time_label": "21:30", "name": "★ 공항 인근 호텔 (1박)", "tag": "숙소", "note": "예약하신 호텔. 아이 일찍 재우기.", "hours": "", "drive": "약 10분", "maps_query": "", "is_lodge": true}, {"day": 2, "sort_order": 1, "time_label": "08:45", "name": "★ 공항 인근 호텔 (출발)", "tag": "숙소", "note": "아침 식사 후 출발. → 박물관까지 약 12분.", "hours": "", "drive": "", "maps_query": "", "is_lodge": true}, {"day": 2, "sort_order": 2, "time_label": "09:00", "name": "국립제주박물관", "tag": "오전", "note": "무료 · 실내 · 유모차 OK. 지하 미디어홀을 아이가 좋아해요. 월요일 휴관이라 오늘 필수.", "hours": "09:00–18:00 · 입장마감 17:30 · 월요일 휴관 (토요일이라 영업 ✓)", "drive": "호텔에서 약 12분", "maps_query": "33.5133428,126.5488784", "is_lodge": false}, {"day": 2, "sort_order": 3, "time_label": "11:00", "name": "길갈팜랜드", "tag": "점심 겸", "note": "알파카·조랑말·토끼 먹이주기. 10시 오픈. 근처에서 점심.", "hours": "10:00–17:30 · 연중무휴 (소규모라 방문 전 전화 확인 권장)", "drive": "약 30분", "maps_query": "33.427439,126.6722667", "is_lodge": false}, {"day": 2, "sort_order": 4, "time_label": "14:00", "name": "비자림", "tag": "오후", "note": "평지 그늘 숲길, 유모차 OK. 한여름 더위 피하기 딱. 약 1시간.", "hours": "09:00–18:00 · 입장마감 17:00 · 연중무휴", "drive": "약 22분", "maps_query": "33.484272,126.8064793", "is_lodge": false}, {"day": 2, "sort_order": 5, "time_label": "16:00", "name": "★ 한동 숙소 (체크인)", "tag": "숙소", "note": "구좌읍 한동북1길 42. 체크인 후 세화·평대 해변 산책 · 저녁.", "hours": "", "drive": "약 15분", "maps_query": "33.5409378,126.8284952", "is_lodge": true}, {"day": 3, "sort_order": 1, "time_label": "09:00", "name": "★ 한동 숙소 (출발)", "tag": "숙소", "note": "아침 식사 후 출발. → 아쿠아플라넷까지 약 22분.", "hours": "", "drive": "", "maps_query": "33.5409378,126.8284952", "is_lodge": true}, {"day": 3, "sort_order": 2, "time_label": "09:30", "name": "아쿠아플라넷 제주", "tag": "오전", "note": "대형 아쿠아리움, 실내라 시원함. 아이 최고 코스. 2~3시간.", "hours": "09:30–18:00 · 매표마감 17:00 · 연중무휴 · 36개월 미만 무료", "drive": "숙소에서 약 22분", "maps_query": "33.4327833,126.9278223", "is_lodge": false}, {"day": 3, "sort_order": 3, "time_label": "12:30", "name": "광치기해변", "tag": "선택", "note": "성산일출봉 뷰, 게·소라 관찰. 잠깐 보고 근처 점심. 아이 지치면 생략.", "hours": "24시간 개방 · 휴무 없음", "drive": "약 8분", "maps_query": "33.4524173,126.9246894", "is_lodge": false}, {"day": 3, "sort_order": 4, "time_label": "14:00", "name": "제주레일바이크", "tag": "오후", "note": "자동 운행이라 아이 안고 타기 편함. 토끼·조랑말 미니 동물원.", "hours": "09:00–17:30 (막차 17시경, 매시 정시 출발) · 연중무휴 · 36개월 미만 무료", "drive": "약 16분", "maps_query": "33.4643125,126.8365625", "is_lodge": false}, {"day": 3, "sort_order": 5, "time_label": "15:30", "name": "우정원베이커리 삼나무점", "tag": "간식", "note": "숲뷰 카페에서 간식·휴식. 진입로가 좁은 1차선이라 운전 주의.", "hours": "09:30–18:00 · 브레이크타임 없음 (소규모라 휴무 전화 확인 권장)", "drive": "약 18분", "maps_query": "33.4672268,126.7817315", "is_lodge": false}, {"day": 3, "sort_order": 6, "time_label": "16:50", "name": "★ 한동 숙소 (복귀)", "tag": "숙소", "note": "저녁 · 휴식.", "hours": "", "drive": "약 20분", "maps_query": "33.5409378,126.8284952", "is_lodge": true}, {"day": 4, "sort_order": 1, "time_label": "11:00", "name": "★ 한동 숙소 (체크아웃)", "tag": "숙소", "note": "짐 싣고 출발. → 김녕해변까지 약 15분.", "hours": "", "drive": "", "maps_query": "33.5409378,126.8284952", "is_lodge": true}, {"day": 4, "sort_order": 2, "time_label": "11:15", "name": "김녕해수욕장", "tag": "선택", "note": "수심 얕고 한적해 아기 물놀이로 딱. 약 1시간.", "hours": "상시 개방 · 물놀이 개장기간·안전관리 시간(보통 09–18시)은 출발 전 확인", "drive": "숙소에서 약 15분", "maps_query": "33.5582327,126.759787", "is_lodge": false}, {"day": 4, "sort_order": 3, "time_label": "12:45", "name": "동문시장", "tag": "선택", "note": "마지막 간식·귤·기념품. 공항까지 약 10분. 비행 급하면 생략하고 직행(약 40분).", "hours": "대부분 08:00–21:00 (점포별 상이) · 월요일 영업", "drive": "약 30분", "maps_query": "33.5115133,126.5262564", "is_lodge": false}, {"day": 4, "sort_order": 4, "time_label": "13:30", "name": "제주국제공항 (반납)", "tag": "출발", "note": "렌트카 반납 약 1시간 → 오후 3시 비행기.", "hours": "공항 24시간 · 렌트카 반납은 예약 업체 영업시간 확인", "drive": "약 10분", "maps_query": "33.5070772,126.4934311", "is_lodge": false}];
+$("#seedBtn").onclick = async ()=>{
+  if(!confirm("지금 짠 일정 18곳을 데이터베이스에 넣을까요?")) return;
+  try{
+    const res = await fetch(REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(SEED) });
+    if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    toast("일정을 채웠어요 ✓","ok");
+    load();
+  }catch(err){ toast("채우기 실패: "+err.message,"err"); }
+};
+
+/* load immediately */
+load();
+</script>
+</body>
+</html>
