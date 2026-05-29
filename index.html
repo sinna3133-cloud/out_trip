@@ -119,6 +119,16 @@
   .locitem:active{background:#F2EAD8}
   .locempty{font-size:12px;color:var(--soft);line-height:1.5;background:#FCFAF4;border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
   .locpicked{font-size:12px;color:var(--teal-deep);line-height:1.45;background:#EAF3F0;border:1px solid #D5E7E2;border-radius:9px;padding:8px 10px}
+  .btn.suggest{justify-content:center;border-style:dashed;color:var(--teal);width:100%}
+  .suggestout{display:grid;gap:8px}
+  .suggestout:empty{display:none}
+  .sdhead{font-size:13px;color:var(--ink);background:#FBF3DF;border:1px solid #EBDDB4;border-radius:10px;padding:9px 11px;line-height:1.5}
+  .sdlist{display:grid;gap:4px}
+  .sdrow{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--soft);padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:#FCFAF4}
+  .sdrow.sdbest{color:var(--teal-deep);background:#EAF3F0;border-color:#D5E7E2;font-weight:700}
+  .sdrow .muted{color:#B0A695;font-weight:400}
+  .sdnote{font-size:11.5px;color:var(--soft);line-height:1.5}
+  .sdapply{justify-content:center;width:100%}
 
   /* status / banners */
   .statusbar{position:fixed;left:0;right:0;bottom:0;z-index:50;font-size:12.5px;text-align:center;
@@ -491,6 +501,7 @@ function openEdit(id){
         <span class="locstate" id="f_locstate">${s.maps_query?'위치 저장됨 ✓':'위치 미지정'}</span>
       </div>
       <div class="locresults" id="f_locresults"></div>
+      <div class="suggestout" id="f_suggestout"></div>
     </div>
     <div><label>메모</label><textarea id="f_note">${esc(s.note)}</textarea></div>
     <div><label>운영시간 (선택)</label><textarea id="f_hours">${esc(s.hours)}</textarea></div>
@@ -541,6 +552,64 @@ function pickLoc(i){
   $("#f_locresults").innerHTML = `<div class="locpicked">선택됨: ${esc(r.display_name)}</div>`;
 }
 
+/* ---------- best-day suggestion (straight-line distance) ---------- */
+function parseCoord(q){
+  if(!q) return null;
+  const m = String(q).split(",");
+  if(m.length!==2) return null;
+  const lat=parseFloat(m[0]), lon=parseFloat(m[1]);
+  if(isNaN(lat)||isNaN(lon)) return null;
+  return {lat, lon};
+}
+function haversine(a, b){ // km
+  const R=6371, toR=x=>x*Math.PI/180;
+  const dLat=toR(b.lat-a.lat), dLon=toR(b.lon-a.lon);
+  const s=Math.sin(dLat/2)**2 + Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function pathLen(pts){ let d=0; for(let i=1;i<pts.length;i++) d+=haversine(pts[i-1],pts[i]); return d; }
+
+/* Returns {best:{day,pos,addKm}, perDay:[...], curDay:{day,pos,addKm}} or null if coord missing.
+   Excludes the place itself (id) from each day's existing route. */
+function computeBestDay(id, coord, currentDay){
+  if(!coord) return null;
+  const me = DATA.find(r=>r.id===id);
+  let best=null, perDay=[], cur=null;
+  for(const day of [1,2,3,4]){
+    const stops = DATA.filter(r=>r.day===day && r.id!==id).sort((a,b)=>a.sort_order-b.sort_order);
+    const known = stops.map(s=>parseCoord(s.maps_query)).filter(Boolean);
+    if(known.length===0){ perDay.push({day, addKm:null, pos:stops.length}); if(day===currentDay) cur={day, addKm:null, pos:stops.length}; continue; }
+    const base = pathLen(known);
+    let bestPos=null, bestAdd=Infinity;
+    for(let pos=0; pos<=stops.length; pos++){
+      const seqStops = stops.slice(0,pos).concat([me]).concat(stops.slice(pos));
+      const seq = seqStops.map(s=> s===me?coord:parseCoord(s.maps_query)).filter(Boolean);
+      const add = pathLen(seq) - base;
+      if(add < bestAdd){ bestAdd=add; bestPos=pos; }
+    }
+    perDay.push({day, addKm:bestAdd, pos:bestPos});
+    if(day===currentDay) cur={day, addKm:bestAdd, pos:bestPos};
+    if(best===null || bestAdd < best.addKm){ best={day, addKm:bestAdd, pos:bestPos}; }
+  }
+  return {best, perDay, cur};
+}
+
+const DAYNAME = {1:"1일차 (금)",2:"2일차 (토)",3:"3일차 (일)",4:"4일차 (월)"};
+
+async function persistOrder(day){
+  const rows = DATA.filter(r=>r.day===day);
+  try{
+    for(const row of rows){
+      const res = await fetch(REST + "?id=eq."+row.id, { method:"PATCH",
+        headers:{...HEAD,"Prefer":"return=minimal"},
+        body: JSON.stringify({ day: row.day, sort_order: row.sort_order, updated_at:new Date().toISOString() }) });
+      if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    }
+    DATA.sort((a,b)=> a.day-b.day || a.sort_order-b.sort_order);
+    render(); toast("추천 위치로 옮겼어요 ✓","ok");
+  }catch(err){ toast("이동 저장 실패: "+err.message,"err"); render(); }
+}
+
 async function saveEdit(id){
   const body = {
     time_label: $("#f_time").value.trim(),
@@ -560,7 +629,31 @@ async function saveEdit(id){
     const [row] = await res.json();
     const i = DATA.findIndex(r=>r.id===id); if(i>=0) DATA[i]=row;
     render(); toast("저장됐어요 ✓","ok");
+    await maybeSuggestMove(id);
   }catch(err){ toast("저장 실패: "+err.message,"err"); }
+}
+
+/* After saving, if a different day is clearly more efficient (and not a lodge), ask to move. */
+async function maybeSuggestMove(id){
+  const me = DATA.find(r=>r.id===id);
+  if(!me || me.is_lodge) return;
+  const coord = parseCoord(me.maps_query);
+  if(!coord) return;
+  const r = computeBestDay(id, coord, me.day);
+  if(!r || !r.best || !r.cur || r.cur.addKm===null) return;
+  const saving = r.cur.addKm - r.best.addKm;
+  if(r.best.day === me.day || saving < 3) return; // within 3km of current → keep, no nag
+  const msg = `이 위치는 ${DAYNAME[me.day]}보다 ${DAYNAME[r.best.day]} 동선에 넣는 게 더 가까워요.\n`
+    + `(추가 이동 추정: ${DAYNAME[me.day]} +${r.cur.addKm.toFixed(1)}km → ${DAYNAME[r.best.day]} +${r.best.addKm.toFixed(1)}km · 직선거리)\n\n`
+    + `${DAYNAME[r.best.day]}의 ${r.best.pos+1}번째로 옮길까요?`;
+  if(confirm(msg)){
+    me.day = r.best.day;
+    const others = DATA.filter(x=>x.day===r.best.day && x.id!==id).sort((a,b)=>a.sort_order-b.sort_order);
+    const seq = others.slice(0,r.best.pos).concat([me]).concat(others.slice(r.best.pos));
+    seq.forEach((x,idx)=> x.sort_order = idx+1);
+    await persistOrder(r.best.day);
+    buzz([12,40,12]);
+  }
 }
 
 async function addStop(day){
