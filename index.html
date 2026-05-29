@@ -72,8 +72,8 @@
   .nav a .d{color:var(--coral)}
 
   .day{margin-top:26px}
-  .dayhead{display:flex;align-items:baseline;gap:10px;padding:0 2px 4px}
-  .daynum{font-family:'Gowun Batang',serif;font-size:30px;color:var(--coral);font-weight:700;line-height:1}
+  .dayhead{display:flex;align-items:baseline;gap:10px;padding:0 2px 4px;flex-wrap:wrap}
+  .daynum{font-family:'Gowun Batang',serif;font-size:20px;color:var(--coral);font-weight:700;line-height:1;letter-spacing:.5px;flex:0 0 auto}
   .daymeta h2{font-family:'Gowun Batang',serif;font-size:18px;color:var(--teal-deep);font-weight:700}
   .daymeta .date{font-size:12.5px;color:var(--soft)}
 
@@ -335,12 +335,6 @@
   <header class="hero">
     <div class="kicker">Jeju Family Trip</div>
     <h1>2026년 제주도 여름휴가<span class="small">우리 세 식구의 3박 4일</span></h1>
-    <div class="meta">
-      <span class="chip"><b>2026.7.17</b> 금 ~ <b>7.20</b> 월</span>
-      <span class="chip">3박 4일</span>
-      <span class="chip">부부 + 아들 <b>22개월</b></span>
-      <span class="chip">렌트카</span>
-    </div>
     <div class="flights">
       <div class="fl">
         <div><div class="dir">가는 편 · 7/17 (금)</div><div class="big">인천 → 제주</div></div>
@@ -364,28 +358,17 @@
   <p class="edithint">장소를 누르면 수정·삭제할 수 있어요. 변경하면 가족 모두에게 반영돼요.</p>
 
   <nav class="nav">
-    <a onclick="jump('d1')"><span class="d">D1</span> 도착</a>
-    <a onclick="jump('d2')"><span class="d">D2</span> 박물관·동물·숲</a>
-    <a onclick="jump('d3')"><span class="d">D3</span> 성산·구좌</a>
-    <a onclick="jump('d4')"><span class="d">D4</span> 해변·공항</a>
+    <a onclick="jump('d1')"><span class="d">DAY 1</span> 도착</a>
+    <a onclick="jump('d2')"><span class="d">DAY 2</span> 박물관·동물·숲</a>
+    <a onclick="jump('d3')"><span class="d">DAY 3</span> 성산·구좌</a>
+    <a onclick="jump('d4')"><span class="d">DAY 4</span> 해변·공항</a>
   </nav>
 
   <div id="days"></div>
 
-  <section class="tips">
-    <h3>알아두면 좋은 것</h3>
-    <ul>
-      <li>이동 시간은 <b>구글맵 차량 기준 대략치</b>예요. 7월 성수기 + 제헌절 연휴라 실제론 더 걸릴 수 있으니, 출발 전 카카오내비/구글맵으로 한 번 더 확인.</li>
-      <li><b>국립제주박물관은 월요일 휴관</b>이라 2일차에 넣었어요. (4일차가 월요일)</li>
-      <li>3일차 광치기해변, 4일차 동문시장은 <b>아이 컨디션 보고 생략 가능</b>한 선택 코스.</li>
-      <li>비 오거나 너무 더우면, 성산의 <b>빛의 벙커</b>(실내 미디어아트)를 3일차 광치기 대신 넣기 좋아요.</li>
-      <li><b>장소를 누르면</b> 수정·삭제 버튼이 나와요. 날짜마다 <b>+ 버튼</b>으로 새 장소도 추가할 수 있고, 변경하면 가족 모두에게 반영돼요.</li>
-    </ul>
-  </section>
-
   <div class="foot">
     <div class="wave">우리 셋, 좋은 여행 되자 🌊</div>
-    각 장소의 <b>길찾기</b>를 누르면 지도 앱이 바로 열려요.
+    각 장소의 <b>이동하기</b>를 누르면 네이버 지도가 바로 열려요.
   </div>
 </div>
 
@@ -517,7 +500,7 @@ function render(){
     const sec = document.createElement("section");
     sec.className="day"; sec.id="d"+day;
     const m = DAYMETA[day];
-    sec.innerHTML = `<div class="dayhead"><div class="daynum">${day}</div>
+    sec.innerHTML = `<div class="dayhead"><div class="daynum">DAY ${day}</div>
       <div class="daymeta"><h2>${esc(m.t)}</h2><div class="date">${esc(m.d)}</div></div></div>
       <div class="tl" id="tl${day}"></div>
       <div class="addstop"><button class="btn ghost" onclick="addStop(${day})">+ 장소 추가</button></div>`;
