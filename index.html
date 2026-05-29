@@ -445,6 +445,7 @@ const CHECKICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const TICK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg>';
 
 let DATA = [];
+const NEW_UNSAVED = new Set();  // ids of stops just added via "+ 장소 추가", not yet saved
 
 const $ = s => document.querySelector(s);
 const esc = s => (s==null?"":String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -718,7 +719,7 @@ function openEdit(id){
     <label class="chk"><input type="checkbox" id="f_lodge" ${s.is_lodge?"checked":""}> 숙소(코랄색)로 표시</label>
     <div class="rowbtns">
       <button class="btn primary" onclick="saveEdit(${id})">저장</button>
-      <button class="btn ghost" onclick="render()">취소</button>
+      <button class="btn ghost" onclick="cancelEdit(${id})">취소</button>
     </div>`;
   card.appendChild(f);
 }
@@ -863,6 +864,7 @@ async function saveEdit(id){
     if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
     const [row] = await res.json();
     const i = DATA.findIndex(r=>r.id===id); if(i>=0) DATA[i]=row;
+    NEW_UNSAVED.delete(id);
     render(); toast("저장됐어요 ✓","ok");
     await maybeSuggestMove(id);
   }catch(err){ toast("저장 실패: "+err.message,"err"); }
@@ -907,7 +909,7 @@ async function addStop(day){
     const res = await fetch(REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
     if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
     const [row] = await res.json();
-    DATA.push(row); render();
+    DATA.push(row); NEW_UNSAVED.add(row.id); render();
     openEdit(row.id);
     const card = document.getElementById("card"+row.id);
     card?.scrollIntoView({behavior:"smooth",block:"center"});
@@ -915,6 +917,19 @@ async function addStop(day){
     setTimeout(()=>{ const nm = card?.querySelector("#f_name"); if(nm){ nm.focus(); nm.select(); } }, 350);
     toast("장소를 추가했어요. 이름부터 입력하세요.","ok");
   }catch(err){ toast("추가 실패: "+err.message,"err"); }
+}
+
+/* Cancel the edit form. If this stop was just added via "+ 장소 추가" and never saved,
+   remove it entirely (server + local) so an empty placeholder doesn't linger. */
+async function cancelEdit(id){
+  if(NEW_UNSAVED.has(id)){
+    NEW_UNSAVED.delete(id);
+    try{
+      await fetch(REST + "?id=eq."+id, { method:"DELETE", headers: HEAD });
+    }catch(e){ /* even if the network call fails, drop it locally */ }
+    DATA = DATA.filter(r=>r.id!==id);
+  }
+  render();
 }
 
 async function delStop(id){
