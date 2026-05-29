@@ -448,14 +448,32 @@ function render(){
   }
 }
 
+/* Build a Naver Map link. Prefers the place name (best for Korean POIs);
+   falls back to coordinates. Opens the Naver app if installed, else the web. */
+function naverGo(s){
+  let name = (s.name||"").replace(/^★\s*/,"").trim();
+  // strip parenthetical memos like "(1박)", "(출발)" and trailing status words
+  name = name.replace(/\s*[\(（][^)）]*[\)）]\s*/g, " ").trim();
+  name = name.replace(/\s+(도착|출발|반납|체크인|체크아웃|복귀)$/g, "").trim();
+  const coord = (s.maps_query||"").trim();
+  let url;
+  if(name){
+    url = "https://map.naver.com/p/search/" + encodeURIComponent(name);
+  } else if(coord){
+    url = "https://map.naver.com/p/search/" + encodeURIComponent(coord);
+  } else {
+    return "";
+  }
+  return `<a class="go" href="${url}" target="_blank" rel="noopener">길찾기 ↗</a>`;
+}
+
 function stopEl(s){
   const d = document.createElement("div");
   d.className = "stop" + (s.is_lodge ? " lodge" : "");
   d.dataset.id = s.id; d.dataset.day = s.day;
   const drive = s.drive ? `<div class="drive">${CAR} ${esc(s.drive)}</div>` : "";
   const hours = s.hours ? `<div class="hours">${CLK}<span>${esc(s.hours)}</span></div>` : "";
-  const q = s.maps_query ? s.maps_query : (s.name||"").replace(/^★\s*/,"");
-  const go = q ? `<a class="go" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}" target="_blank">길찾기 ↗</a>` : "";
+  const go = naverGo(s);
   const acts = `<div class="acts" data-id="${s.id}">
        <button class="btn primary" onclick="openEdit(${s.id})">${EDIT}<span>수정</span></button>
        <button class="btn danger" onclick="delStop(${s.id})">삭제</button>
