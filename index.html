@@ -92,8 +92,14 @@
   .addstop{margin:2px 0 6px 26px}
   .addstop .btn{width:100%;justify-content:center;border-style:dashed;padding:10px}
   .card{cursor:pointer}
-  .acts{display:none;gap:7px;margin-top:11px;border-top:1px dashed var(--line);padding-top:11px}
+  .acts{display:none;gap:7px;margin-top:11px;border-top:1px dashed var(--line);padding-top:11px;flex-wrap:wrap}
   .acts.open{display:flex}
+  .btn.drag{touch-action:none;cursor:grab;color:var(--teal)}
+  .btn.drag:active{cursor:grabbing}
+  .stop.dragging{opacity:.6}
+  .stop.dragging .card{box-shadow:0 10px 28px rgba(42,39,34,.22);border-color:var(--teal);transform:scale(1.01)}
+  body.dragging-active{user-select:none;-webkit-user-select:none}
+  body.dragging-active .tl{touch-action:none}
 
   /* edit form */
   .ef{margin-top:10px;border-top:1px dashed var(--line);padding-top:11px;display:grid;gap:8px}
@@ -305,6 +311,7 @@ const CAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 const CLK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 const EDIT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6"/><path d="M17.5 2.5a2.12 2.12 0 0 1 3 3L11 15l-4 1 1-4Z"/></svg>';
 const PIN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+const GRIP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="0.6"/><circle cx="9" cy="12" r="0.6"/><circle cx="9" cy="18" r="0.6"/><circle cx="15" cy="6" r="0.6"/><circle cx="15" cy="12" r="0.6"/><circle cx="15" cy="18" r="0.6"/></svg>';
 
 let DATA = [];
 
@@ -366,13 +373,15 @@ function render(){
 function stopEl(s){
   const d = document.createElement("div");
   d.className = "stop" + (s.is_lodge ? " lodge" : "");
+  d.dataset.id = s.id; d.dataset.day = s.day;
   const drive = s.drive ? `<div class="drive">${CAR} ${esc(s.drive)}</div>` : "";
   const hours = s.hours ? `<div class="hours">${CLK}<span>${esc(s.hours)}</span></div>` : "";
   const q = s.maps_query ? s.maps_query : (s.name||"").replace(/^★\s*/,"");
   const go = q ? `<a class="go" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}" target="_blank">길찾기 ↗</a>` : "";
   const acts = `<div class="acts" data-id="${s.id}">
        <button class="btn primary" onclick="openEdit(${s.id})">${EDIT}<span>수정</span></button>
-       <button class="btn danger" onclick="delStop(${s.id})">삭제</button></div>`;
+       <button class="btn danger" onclick="delStop(${s.id})">삭제</button>
+       <button class="btn drag" title="끌어서 순서 변경" onpointerdown="startDrag(event, ${s.id})">${GRIP}<span>순서</span></button></div>`;
   d.innerHTML = `<span class="dot"></span>${drive}
     <div class="card" id="card${s.id}" onclick="toggleActions(${s.id}, event)">
       <div class="top"><span class="time">${esc(s.time_label)}</span><span class="name">${esc(s.name)}</span>${s.tag?`<span class="tag">${esc(s.tag)}</span>`:""}</div>
@@ -380,6 +389,74 @@ function stopEl(s){
       ${hours}${go}${acts}
     </div>`;
   return d;
+}
+
+/* ---------- drag & drop reorder (touch + mouse) ---------- */
+let drag = null;
+function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+function startDrag(ev, id){
+  ev.preventDefault(); ev.stopPropagation();
+  const stopEls = document.querySelector('.stop[data-id="'+id+'"]');
+  if(!stopEls) return;
+  const day = +stopEls.dataset.day;
+  const container = document.getElementById("tl"+day);
+  drag = { id, day, el: stopEls, container, startY: ev.clientY, moved:false, lastBefore: undefined };
+  stopEls.classList.add("dragging");
+  document.body.classList.add("dragging-active");
+  buzz(18); // pick-up feedback
+  window.addEventListener("pointermove", onDragMove);
+  window.addEventListener("pointerup", endDrag, { once:true });
+  try{ ev.target.setPointerCapture(ev.pointerId); }catch(e){}
+}
+function onDragMove(ev){
+  if(!drag) return;
+  if(Math.abs(ev.clientY - drag.startY) > 4) drag.moved = true;
+  const sibs = [...drag.container.querySelectorAll(".stop:not(.dragging)")];
+  let placed = false, beforeId = null;
+  for(const sib of sibs){
+    const r = sib.getBoundingClientRect();
+    if(ev.clientY < r.top + r.height/2){
+      beforeId = sib.dataset.id;
+      drag.container.insertBefore(drag.el, sib); placed = true; break;
+    }
+  }
+  if(!placed){ beforeId = "end"; drag.container.appendChild(drag.el); }
+  // buzz only when the insertion position actually changes
+  if(beforeId !== drag.lastBefore){
+    if(drag.lastBefore !== undefined) buzz(8); // tick as it crosses a slot
+    drag.lastBefore = beforeId;
+  }
+  // auto-scroll near edges
+  const m = 70;
+  if(ev.clientY < m) window.scrollBy(0, -12);
+  else if(ev.clientY > window.innerHeight - m) window.scrollBy(0, 12);
+}
+async function endDrag(ev){
+  window.removeEventListener("pointermove", onDragMove);
+  if(!drag) return;
+  const d = drag; drag = null;
+  d.el.classList.remove("dragging");
+  document.body.classList.remove("dragging-active");
+  if(!d.moved) return; // was a tap, not a drag
+  // read new order in this day's container
+  const ids = [...d.container.querySelectorAll(".stop")].map(el=>+el.dataset.id);
+  // update local DATA sort_order and persist changed rows
+  const changed = [];
+  ids.forEach((id, idx)=>{
+    const row = DATA.find(r=>r.id===id);
+    if(row && row.sort_order !== idx+1){ row.sort_order = idx+1; changed.push(row); }
+  });
+  if(!changed.length) return;
+  try{
+    for(const row of changed){
+      const res = await fetch(REST + "?id=eq."+row.id, { method:"PATCH",
+        headers:{...HEAD,"Prefer":"return=minimal"},
+        body: JSON.stringify({ sort_order: row.sort_order, updated_at:new Date().toISOString() }) });
+      if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    }
+    DATA.sort((a,b)=> a.day-b.day || a.sort_order-b.sort_order);
+    render(); buzz([12,40,12]); toast("순서를 저장했어요 ✓","ok");
+  }catch(err){ toast("순서 저장 실패: "+err.message,"err"); render(); }
 }
 
 /* ---------- edit form ---------- */
