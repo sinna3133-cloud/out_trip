@@ -113,9 +113,8 @@
   .acts{display:none;gap:7px;margin-top:11px;border-top:1px dashed var(--line);padding-top:11px;flex-wrap:wrap}
   .acts.open{display:flex}
   .btn.drag{touch-action:none;cursor:grab;color:var(--teal)}
-  .btn.drag:active{cursor:grabbing}
-  .stop.dragging{opacity:.6}
-  .stop.dragging .card{box-shadow:0 10px 28px rgba(42,39,34,.22);border-color:var(--teal);transform:scale(1.01)}
+  .stop.dragging{opacity:.7}
+  .stop.dragging .card{box-shadow:0 12px 30px rgba(42,39,34,.28);border-color:var(--teal);transform:scale(1.03)}
   body.dragging-active{user-select:none;-webkit-user-select:none}
   body.dragging-active .tl{touch-action:none}
 
@@ -506,7 +505,7 @@ function render(){
       <div class="addstop"><button class="btn ghost" onclick="addStop(${day})">+ 장소 추가</button></div>`;
     wrap.appendChild(sec);
     const tl = sec.querySelector("#tl"+day);
-    stops.forEach(s => tl.appendChild(stopEl(s, nn)));
+    stops.forEach((s, idx) => tl.appendChild(stopEl(s, nn, stops[idx-1])));
     if(stops.length===0){ tl.innerHTML='<div class="note" style="padding-left:26px">아직 장소가 없어요.</div>'; }
   }
   // scroll the "now" card into view on first load during the trip
@@ -535,7 +534,17 @@ function naverGo(s){
   return `<a class="go" href="${url}" target="_blank" rel="noopener">${CAR}<span>이동하기</span></a>`;
 }
 
-function stopEl(s, nn){
+function driveEstimate(prev, cur){
+  if(!prev) return "";
+  const a = parseCoord(prev.maps_query), b = parseCoord(cur.maps_query);
+  if(!a || !b) return "";
+  const km = haversine(a,b) * 1.35;        // straighten-line → road factor
+  if(km < 0.05) return "";
+  const mins = Math.max(1, Math.round(km / 60 * 60));  // avg 60 km/h
+  return "약 " + mins + "분 (예상)";
+}
+
+function stopEl(s, nn, prev){
   nn = nn || {};
   const d = document.createElement("div");
   let cls = "stop" + (s.is_lodge ? " lodge" : "");
@@ -543,7 +552,8 @@ function stopEl(s, nn){
   else if(nn.nextId===s.id) cls += " isnext";
   d.className = cls;
   d.dataset.id = s.id; d.dataset.day = s.day;
-  const drive = s.drive ? `<div class="drive">${CAR} ${esc(s.drive)}</div>` : "";
+  const driveText = s.drive ? esc(s.drive) : esc(driveEstimate(prev, s));
+  const drive = driveText ? `<div class="drive">${CAR} ${driveText}</div>` : "";
   const hours = s.hours ? `<div class="hours">${CLK}<span>${esc(s.hours)}</span></div>` : "";
   const go = naverGo(s);
   let badge = "";
@@ -552,10 +562,9 @@ function stopEl(s, nn){
   const tagOrBadge = badge || (s.tag?`<span class="tag">${esc(s.tag)}</span>`:"");
   const acts = `<div class="acts" data-id="${s.id}">
        <button class="btn primary" onclick="openEdit(${s.id})">${EDIT}<span>수정</span></button>
-       <button class="btn danger" onclick="delStop(${s.id})">삭제</button>
-       <button class="btn drag" title="끌어서 순서 변경" onpointerdown="startDrag(event, ${s.id})">${GRIP}<span>순서</span></button></div>`;
+       <button class="btn danger" onclick="delStop(${s.id})">삭제</button></div>`;
   d.innerHTML = `<span class="dot"></span>${drive}
-    <div class="card" id="card${s.id}" onclick="toggleActions(${s.id}, event)">
+    <div class="card" id="card${s.id}" onpointerdown="pressStart(event, ${s.id})">
       <div class="top"><span class="time">${esc(s.time_label)}</span><span class="name">${esc(s.name)}</span>${tagOrBadge}</div>
       ${s.note?`<div class="note">${esc(s.note)}</div>`:""}
       ${hours}${go}${acts}
@@ -565,20 +574,59 @@ function stopEl(s, nn){
 
 /* ---------- drag & drop reorder (touch + mouse) ---------- */
 let drag = null;
+let press = null;
+const LONGPRESS_MS = 320;
 function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
-function startDrag(ev, id){
-  ev.preventDefault(); ev.stopPropagation();
-  const stopEls = document.querySelector('.stop[data-id="'+id+'"]');
-  if(!stopEls) return;
-  const day = +stopEls.dataset.day;
+
+/* Pointer down on a card: decide between tap, scroll, or long-press drag. */
+function pressStart(ev, id){
+  // ignore presses on interactive children (links/buttons) so they work normally
+  if(ev.target.closest(".go") || ev.target.closest(".acts") || ev.target.closest(".ef")) return;
+  if(ev.button && ev.button!==0) return;
+  const stopEl = document.querySelector('.stop[data-id="'+id+'"]');
+  if(!stopEl) return;
+  const startX = ev.clientX, startY = ev.clientY;
+  press = { id, stopEl, startX, startY, pointerId: ev.pointerId, started:false,
+    timer: setTimeout(()=>{ beginDrag(id, startY); }, LONGPRESS_MS) };
+  window.addEventListener("pointermove", pressMove);
+  window.addEventListener("pointerup", pressUp, { once:true });
+  window.addEventListener("pointercancel", pressCancel, { once:true });
+}
+function pressMove(ev){
+  if(!press) return;
+  if(drag){ onDragMove(ev); return; }
+  // moved before long-press fired → user is scrolling; cancel the pending drag
+  if(Math.abs(ev.clientX-press.startX) > 10 || Math.abs(ev.clientY-press.startY) > 10){
+    clearTimeout(press.timer);
+    cleanupPress();
+  }
+}
+function pressUp(ev){
+  if(drag){ endDrag(ev); cleanupPress(); return; }
+  if(press){
+    clearTimeout(press.timer);
+    // quick tap with no long-press → reveal actions
+    toggleActions(press.id);
+    cleanupPress();
+  }
+}
+function pressCancel(){ if(press){ clearTimeout(press.timer); } if(!drag) cleanupPress(); }
+function cleanupPress(){
+  window.removeEventListener("pointermove", pressMove);
+  press = null;
+}
+
+function beginDrag(id, startY){
+  const stopEl = document.querySelector('.stop[data-id="'+id+'"]');
+  if(!stopEl) return;
+  const day = +stopEl.dataset.day;
   const container = document.getElementById("tl"+day);
-  drag = { id, day, el: stopEls, container, startY: ev.clientY, moved:false, lastBefore: undefined };
-  stopEls.classList.add("dragging");
+  drag = { id, day, el: stopEl, container, startY, moved:false, lastBefore: undefined };
+  // close any open action bars while dragging
+  document.querySelectorAll(".acts.open").forEach(el=>el.classList.remove("open"));
+  stopEl.classList.add("dragging");
   document.body.classList.add("dragging-active");
   buzz(18); // pick-up feedback
-  window.addEventListener("pointermove", onDragMove);
-  window.addEventListener("pointerup", endDrag, { once:true });
-  try{ ev.target.setPointerCapture(ev.pointerId); }catch(e){}
 }
 function onDragMove(ev){
   if(!drag) return;
@@ -593,26 +641,21 @@ function onDragMove(ev){
     }
   }
   if(!placed){ beforeId = "end"; drag.container.appendChild(drag.el); }
-  // buzz only when the insertion position actually changes
   if(beforeId !== drag.lastBefore){
-    if(drag.lastBefore !== undefined) buzz(8); // tick as it crosses a slot
+    if(drag.lastBefore !== undefined) buzz(8);
     drag.lastBefore = beforeId;
   }
-  // auto-scroll near edges
   const m = 70;
   if(ev.clientY < m) window.scrollBy(0, -12);
   else if(ev.clientY > window.innerHeight - m) window.scrollBy(0, 12);
 }
 async function endDrag(ev){
-  window.removeEventListener("pointermove", onDragMove);
   if(!drag) return;
   const d = drag; drag = null;
   d.el.classList.remove("dragging");
   document.body.classList.remove("dragging-active");
-  if(!d.moved) return; // was a tap, not a drag
-  // read new order in this day's container
+  if(!d.moved) return; // held but didn't move
   const ids = [...d.container.querySelectorAll(".stop")].map(el=>+el.dataset.id);
-  // update local DATA sort_order and persist changed rows
   const changed = [];
   ids.forEach((id, idx)=>{
     const row = DATA.find(r=>r.id===id);
@@ -799,12 +842,20 @@ async function saveEdit(id){
 async function maybeSuggestMove(id){
   const me = DATA.find(r=>r.id===id);
   if(!me || me.is_lodge) return;
-  const coord = parseCoord(me.maps_query);
+  let coord = parseCoord(me.maps_query);
+  // if no saved coordinate, try to look it up by name so the check can still run
+  if(!coord && me.name){
+    try{
+      const nm = me.name.replace(/^★\s*/,"").replace(/\s*[\(（][^)）]*[\)）]\s*/g," ").trim();
+      const res = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ko&q="+encodeURIComponent(nm), { headers:{ "Accept":"application/json" } });
+      if(res.ok){ const list = await res.json(); if(list[0]){ coord = {lat:parseFloat(list[0].lat), lon:parseFloat(list[0].lon)}; } }
+    }catch(e){ /* offline or blocked → skip silently */ }
+  }
   if(!coord) return;
   const r = computeBestDay(id, coord, me.day);
   if(!r || !r.best || !r.cur || r.cur.addKm===null) return;
   const saving = r.cur.addKm - r.best.addKm;
-  if(r.best.day === me.day || saving < 3) return; // within 3km of current → keep, no nag
+  if(r.best.day === me.day || saving < 1) return; // best day is already current, or barely different → no nag
   const msg = `이 위치는 ${DAYNAME[me.day]}보다 ${DAYNAME[r.best.day]} 동선에 넣는 게 더 가까워요.\n`
     + `(추가 이동 추정: ${DAYNAME[me.day]} +${r.cur.addKm.toFixed(1)}km → ${DAYNAME[r.best.day]} +${r.best.addKm.toFixed(1)}km · 직선거리)\n\n`
     + `${DAYNAME[r.best.day]}의 ${r.best.pos+1}번째로 옮길까요?`;
