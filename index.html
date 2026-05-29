@@ -728,42 +728,53 @@ async function searchLoc(id){
   const box = $("#f_locresults");
   const state = $("#f_locstate");
   if(!raw){ toast("먼저 장소 이름을 적어주세요","err"); return; }
-  // auto-add "제주" for better local hits (skip if already mentions 제주)
-  const q = /제주/.test(raw) ? raw : (raw + " 제주");
+
+  // If the user typed coordinates directly (e.g. "33.52, 126.59"), accept them as-is
+  const coordM = raw.match(/^\s*(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/);
+  if(coordM){
+    $("#f_maps").value = parseFloat(coordM[1]).toFixed(6)+","+parseFloat(coordM[2]).toFixed(6);
+    state.textContent = "위치 저장됨 ✓ (좌표 직접 입력)";
+    box.innerHTML = `<div class="locpicked">좌표를 그대로 저장했어요: ${esc(raw)}</div>`;
+    return;
+  }
+
   state.textContent = "검색 중…";
   box.innerHTML = "";
   let list = [];
-  // 1) OpenStreetMap (Nominatim)
+
+  // 1) Kakao 장소 검색 (프록시 경유) — 한국 장소가 가장 잘 나옴
   try{
-    const url = "https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ko&countrycodes=kr&q=" + encodeURIComponent(q);
-    const res = await fetch(url, { headers: { "Accept":"application/json" } });
+    const res = await fetch("/api/kakao-search?q=" + encodeURIComponent(raw));
     if(res.ok){
-      const osm = await res.json();
-      list = osm.map(r=>({ lat:parseFloat(r.lat), lon:parseFloat(r.lon), label:r.display_name, src:"OSM" }));
+      const data = await res.json();
+      if(data.results && data.results.length){
+        list = data.results.map(r=>({ lat:r.lat, lon:r.lon, name:r.name, label:(r.address||r.name), src:"Kakao" }));
+      }
     }
-  }catch(e){ /* fall through to Google */ }
-  // 2) Google geocoding fallback if OSM found nothing
+  }catch(e){ /* proxy not set up yet → fall back to OSM */ }
+
+  // 2) OSM 폴백 (프록시 미설정/실패 시)
   if(list.length===0){
+    const q = /제주/.test(raw) ? raw : (raw + " 제주");
     try{
-      const gurl = "https://maps.googleapis.com/maps/api/geocode/json?language=ko&region=kr&address=" + encodeURIComponent(q);
-      const gres = await fetch(gurl);
-      if(gres.ok){
-        const g = await gres.json();
-        if(g.results && g.results.length){
-          list = g.results.slice(0,6).map(r=>({ lat:r.geometry.location.lat, lon:r.geometry.location.lng, label:r.formatted_address, src:"Google" }));
-        }
+      const url = "https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ko&countrycodes=kr&q=" + encodeURIComponent(q);
+      const res = await fetch(url, { headers: { "Accept":"application/json" } });
+      if(res.ok){
+        const osm = await res.json();
+        list = osm.map(r=>({ lat:parseFloat(r.lat), lon:parseFloat(r.lon), name:raw, label:r.display_name, src:"OSM" }));
       }
     }catch(e){ /* both failed */ }
   }
+
   if(!list.length){
     state.textContent = "결과 없음 — 이름만 저장돼요";
-    box.innerHTML = `<div class="locempty"><b>${esc(raw)}</b> 위치를 못 찾았어요. 이름만 저장해도 <b>이동하기</b>는 네이버에서 잘 열려요. 동선 계산이 필요하면, 네이버/구글 지도에서 좌표를 복사해 붙여넣거나 더 일반적인 이름으로 다시 검색해 보세요.</div>`;
+    box.innerHTML = `<div class="locempty"><b>${esc(raw)}</b> 위치를 못 찾았어요. 이름만 저장해도 <b>이동하기</b>는 네이버에서 잘 열려요. 정확한 동선 계산이 필요하면, 네이버/구글 지도에서 좌표를 복사해 이 칸(또는 이름 칸)에 <b>33.52, 126.59</b> 형태로 붙여넣고 다시 검색하세요.</div>`;
     return;
   }
   state.textContent = "맞는 위치를 선택하세요";
   box.innerHTML = list.map((r,i)=>{
     return `<button type="button" class="locitem" onclick="pickLoc(${i})">
-        <span class="locq">${esc(raw)}</span><span class="loca">${esc(r.label)}</span></button>`;
+        <span class="locq">${esc(r.name||raw)}</span><span class="loca">${esc(r.label)}</span></button>`;
   }).join("");
   window.__locCandidates = list;
 }
