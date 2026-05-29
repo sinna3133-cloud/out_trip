@@ -87,8 +87,12 @@
   .btn.coral{background:var(--coral);color:#fff;border-color:var(--coral)}
   .btn.ghost{background:transparent}
   .btn.danger{color:#B23A2E;border-color:#E6C6C0}
+  .btn svg{width:14px;height:14px;flex:0 0 auto}
   .addstop{margin:2px 0 6px 26px}
   .addstop .btn{width:100%;justify-content:center;border-style:dashed;padding:10px}
+  .card{cursor:pointer}
+  .acts{display:none;gap:7px;margin-top:11px;border-top:1px dashed var(--line);padding-top:11px}
+  .acts.open{display:flex}
 
   /* edit form */
   .ef{margin-top:10px;border-top:1px dashed var(--line);padding-top:11px;display:grid;gap:8px}
@@ -114,14 +118,7 @@
   .diag.load{background:#FBF3DF;border:1px solid #EBDDB4;color:#7A5B12}
   .diag b{font-weight:700}
 
-  .editbar{display:flex;align-items:center;gap:9px;margin:18px 2px 4px;flex-wrap:wrap}
-  .editbar .lbl{font-size:13px;color:var(--soft)}
-  .switch{position:relative;display:inline-block;width:48px;height:27px;flex:0 0 auto}
-  .switch input{opacity:0;width:0;height:0}
-  .slider{position:absolute;inset:0;background:#D9CFBC;border-radius:999px;transition:.2s;cursor:pointer}
-  .slider:before{content:"";position:absolute;height:21px;width:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
-  .switch input:checked+.slider{background:var(--coral)}
-  .switch input:checked+.slider:before{transform:translateX(21px)}
+  .edithint{font-size:12.5px;color:var(--soft);margin:16px 2px 0;padding-left:2px}
 
   .seedwrap{margin:14px 0}
   .seedwrap .btn{width:100%;justify-content:center;padding:12px}
@@ -250,12 +247,7 @@
     <button class="btn coral" id="seedBtn">처음 한 번: 지금 일정 18곳 채워넣기</button>
   </div>
 
-  <!-- edit mode toggle -->
-  <div class="editbar">
-    <span class="lbl">편집 모드</span>
-    <label class="switch"><input type="checkbox" id="editToggle"><span class="slider"></span></label>
-    <span class="lbl" id="editHint">끄면 보기 전용</span>
-  </div>
+  <p class="edithint">장소를 누르면 수정·삭제할 수 있어요. 변경하면 가족 모두에게 반영돼요.</p>
 
   <nav class="nav">
     <a onclick="jump('d1')"><span class="d">D1</span> 도착</a>
@@ -273,7 +265,7 @@
       <li><b>국립제주박물관은 월요일 휴관</b>이라 2일차에 넣었어요. (4일차가 월요일)</li>
       <li>3일차 광치기해변, 4일차 동문시장은 <b>아이 컨디션 보고 생략 가능</b>한 선택 코스.</li>
       <li>비 오거나 너무 더우면, 성산의 <b>빛의 벙커</b>(실내 미디어아트)를 3일차 광치기 대신 넣기 좋아요.</li>
-      <li><b>편집 모드</b>를 켜면 장소를 수정·추가·삭제할 수 있고, 저장하면 가족 모두에게 반영돼요.</li>
+      <li><b>장소를 누르면</b> 수정·삭제 버튼이 나와요. 날짜마다 <b>+ 버튼</b>으로 새 장소도 추가할 수 있고, 변경하면 가족 모두에게 반영돼요.</li>
     </ul>
   </section>
 
@@ -301,21 +293,22 @@ const DAYMETA = {
 };
 const CAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5l1.6-4.3A2 2 0 0 1 6.5 6h11a2 2 0 0 1 1.9 1.2L21 11.5"/><rect x="2.5" y="11.5" width="19" height="4.5" rx="1.2"/><circle cx="7" cy="17.5" r="1.4"/><circle cx="17" cy="17.5" r="1.4"/></svg>';
 const CLK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const EDIT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6"/><path d="M17.5 2.5a2.12 2.12 0 0 1 3 3L11 15l-4 1 1-4Z"/></svg>';
 
 let DATA = [];
-let editMode = false;
 
 const $ = s => document.querySelector(s);
 const esc = s => (s==null?"":String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(msg, kind){ const b=$("#status"); b.textContent=msg; b.className="statusbar show "+(kind||"info"); clearTimeout(b._t); b._t=setTimeout(()=>b.className="statusbar "+(kind||"info"),2600); }
 function jump(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:"smooth"}); }
 
-/* ---------- edit toggle ---------- */
-$("#editToggle").addEventListener("change", e=>{
-  editMode = e.target.checked;
-  $("#editHint").textContent = editMode ? "켜짐 · 수정·추가·삭제 가능" : "끄면 보기 전용";
-  render();
-});
+/* ---------- tap a card to reveal edit/delete ---------- */
+function toggleActions(id, ev){
+  if(ev){ const t=ev.target; if(t.closest(".go")||t.closest(".acts")||t.closest(".ef")) return; }
+  document.querySelectorAll(".acts.open").forEach(el=>{ if(el.dataset.id!=id) el.classList.remove("open"); });
+  const bar = document.querySelector('.acts[data-id="'+id+'"]');
+  if(bar) bar.classList.toggle("open");
+}
 
 /* ---------- load from Supabase ---------- */
 async function load(){
@@ -351,7 +344,7 @@ function render(){
     sec.innerHTML = `<div class="dayhead"><div class="daynum">${day}</div>
       <div class="daymeta"><h2>${esc(m.t)}</h2><div class="date">${esc(m.d)}</div></div></div>
       <div class="tl" id="tl${day}"></div>
-      <div class="addstop ${editMode?'':'hidden'}"><button class="btn ghost" onclick="addStop(${day})">+ 이 날에 장소 추가</button></div>`;
+      <div class="addstop"><button class="btn ghost" onclick="addStop(${day})">+ 이 날에 장소 추가</button></div>`;
     wrap.appendChild(sec);
     const tl = sec.querySelector("#tl"+day);
     stops.forEach(s => tl.appendChild(stopEl(s)));
@@ -365,14 +358,14 @@ function stopEl(s){
   const drive = s.drive ? `<div class="drive">${CAR} ${esc(s.drive)}</div>` : "";
   const hours = s.hours ? `<div class="hours">${CLK}<span>${esc(s.hours)}</span></div>` : "";
   const go = s.maps_query ? `<a class="go" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.maps_query)}" target="_blank">길찾기 ↗</a>` : "";
-  const editBtns = editMode ? `<div class="rowbtns">
-       <button class="btn" onclick="openEdit(${s.id})">✎ 수정</button>
-       <button class="btn danger" onclick="delStop(${s.id})">삭제</button></div>` : "";
+  const acts = `<div class="acts" data-id="${s.id}">
+       <button class="btn primary" onclick="openEdit(${s.id})">${EDIT}<span>수정</span></button>
+       <button class="btn danger" onclick="delStop(${s.id})">삭제</button></div>`;
   d.innerHTML = `<span class="dot"></span>${drive}
-    <div class="card" id="card${s.id}">
+    <div class="card" id="card${s.id}" onclick="toggleActions(${s.id}, event)">
       <div class="top"><span class="time">${esc(s.time_label)}</span><span class="name">${esc(s.name)}</span>${s.tag?`<span class="tag">${esc(s.tag)}</span>`:""}</div>
       ${s.note?`<div class="note">${esc(s.note)}</div>`:""}
-      ${hours}${go}${editBtns}
+      ${hours}${go}${acts}
     </div>`;
   return d;
 }
@@ -380,6 +373,7 @@ function stopEl(s){
 /* ---------- edit form ---------- */
 function openEdit(id){
   const s = DATA.find(r=>r.id===id); if(!s) return;
+  if(window.event) window.event.stopPropagation();
   const card = $("#card"+id);
   if(card.querySelector(".ef")) return; // already open
   const f = document.createElement("div");
