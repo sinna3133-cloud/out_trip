@@ -132,8 +132,11 @@
   .locstate{font-size:12px;color:var(--soft)}
   .locresults{display:grid;gap:5px}
   .locitem{font-family:inherit;text-align:left;font-size:12.5px;line-height:1.45;color:var(--ink);
-       background:#FCFAF4;border:1px solid var(--line);border-radius:9px;padding:8px 10px;cursor:pointer}
+       background:#FCFAF4;border:1px solid var(--line);border-radius:9px;padding:8px 10px;cursor:pointer;
+       display:flex;flex-direction:column;gap:2px;width:100%}
   .locitem:active{background:#F2EAD8}
+  .locitem .locq{font-weight:700;color:var(--teal-deep);font-size:12.5px}
+  .locitem .loca{color:var(--soft);font-size:11.5px;line-height:1.4}
   .locempty{font-size:12px;color:var(--soft);line-height:1.5;background:#FCFAF4;border:1px dashed var(--line);border-radius:9px;padding:8px 10px}
   .locpicked{font-size:12px;color:var(--teal-deep);line-height:1.45;background:#EAF3F0;border:1px solid #D5E7E2;border-radius:9px;padding:8px 10px}
   .btn.suggest{justify-content:center;border-style:dashed;color:var(--teal);width:100%}
@@ -478,7 +481,7 @@ async function load(){
       diag.className="diag ok"; diag.innerHTML="<b>연결 성공!</b> 아직 일정이 비어 있어요. 아래 버튼으로 처음 일정을 채워넣으세요.";
       $("#seedWrap").classList.remove("hidden");
     } else {
-      diag.className="diag ok"; diag.innerHTML="<b>연결 성공 ✓</b> 일정 "+DATA.length+"곳을 불러왔어요. 가족이 함께 편집할 수 있어요.";
+      diag.className="diag hidden"; diag.innerHTML="";   // success: no banner needed
       $("#seedWrap").classList.add("hidden");
     }
     render();
@@ -721,40 +724,56 @@ function openEdit(id){
 }
 
 async function searchLoc(id){
-  const q = $("#f_name").value.trim();
+  const raw = $("#f_name").value.trim();
   const box = $("#f_locresults");
   const state = $("#f_locstate");
-  if(!q){ toast("먼저 장소 이름을 적어주세요","err"); return; }
+  if(!raw){ toast("먼저 장소 이름을 적어주세요","err"); return; }
+  // auto-add "제주" for better local hits (skip if already mentions 제주)
+  const q = /제주/.test(raw) ? raw : (raw + " 제주");
   state.textContent = "검색 중…";
   box.innerHTML = "";
+  let list = [];
+  // 1) OpenStreetMap (Nominatim)
   try{
-    const url = "https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ko&q=" + encodeURIComponent(q);
+    const url = "https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ko&countrycodes=kr&q=" + encodeURIComponent(q);
     const res = await fetch(url, { headers: { "Accept":"application/json" } });
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const list = await res.json();
-    if(!list.length){
-      state.textContent = "결과 없음 — 이름만 저장돼요";
-      box.innerHTML = `<div class="locempty">검색 결과가 없어요. 그냥 저장하면 길찾기는 장소 이름으로 열려요. 더 일반적인 이름(예: '협재해수욕장')으로 다시 검색해 보세요.</div>`;
-      return;
+    if(res.ok){
+      const osm = await res.json();
+      list = osm.map(r=>({ lat:parseFloat(r.lat), lon:parseFloat(r.lon), label:r.display_name, src:"OSM" }));
     }
-    state.textContent = "맞는 위치를 선택하세요";
-    box.innerHTML = list.map((r,i)=>{
-      const label = esc(r.display_name);
-      return `<button type="button" class="locitem" onclick="pickLoc(${i})">${label}</button>`;
-    }).join("");
-    window.__locCandidates = list;
-  }catch(err){
-    state.textContent = "검색 실패 — 이름만 저장돼요";
-    box.innerHTML = `<div class="locempty">위치 검색에 연결하지 못했어요 (${esc(err.message)}). 그냥 저장하면 길찾기는 장소 이름으로 열려요.</div>`;
+  }catch(e){ /* fall through to Google */ }
+  // 2) Google geocoding fallback if OSM found nothing
+  if(list.length===0){
+    try{
+      const gurl = "https://maps.googleapis.com/maps/api/geocode/json?language=ko&region=kr&address=" + encodeURIComponent(q);
+      const gres = await fetch(gurl);
+      if(gres.ok){
+        const g = await gres.json();
+        if(g.results && g.results.length){
+          list = g.results.slice(0,6).map(r=>({ lat:r.geometry.location.lat, lon:r.geometry.location.lng, label:r.formatted_address, src:"Google" }));
+        }
+      }
+    }catch(e){ /* both failed */ }
   }
+  if(!list.length){
+    state.textContent = "결과 없음 — 이름만 저장돼요";
+    box.innerHTML = `<div class="locempty"><b>${esc(raw)}</b> 위치를 못 찾았어요. 이름만 저장해도 <b>이동하기</b>는 네이버에서 잘 열려요. 동선 계산이 필요하면, 네이버/구글 지도에서 좌표를 복사해 붙여넣거나 더 일반적인 이름으로 다시 검색해 보세요.</div>`;
+    return;
+  }
+  state.textContent = "맞는 위치를 선택하세요";
+  box.innerHTML = list.map((r,i)=>{
+    return `<button type="button" class="locitem" onclick="pickLoc(${i})">
+        <span class="locq">${esc(raw)}</span><span class="loca">${esc(r.label)}</span></button>`;
+  }).join("");
+  window.__locCandidates = list;
 }
 
 function pickLoc(i){
   const r = (window.__locCandidates||[])[i];
   if(!r) return;
-  $("#f_maps").value = parseFloat(r.lat).toFixed(6) + "," + parseFloat(r.lon).toFixed(6);
+  $("#f_maps").value = r.lat.toFixed(6) + "," + r.lon.toFixed(6);
   $("#f_locstate").textContent = "위치 저장됨 ✓";
-  $("#f_locresults").innerHTML = `<div class="locpicked">선택됨: ${esc(r.display_name)}</div>`;
+  $("#f_locresults").innerHTML = `<div class="locpicked">선택됨: ${esc(r.label)}</div>`;
 }
 
 /* ---------- best-day suggestion (straight-line distance) ---------- */
