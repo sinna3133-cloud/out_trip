@@ -959,6 +959,19 @@ async function endDrag(ev){
   if(!d.moved) return; // held but didn't move
 
   const toDay = d.day, fromDay = d.fromDay;
+
+  // Moving to a different day only *previewed* the new spot during the drag — nothing
+  // has been saved yet. Confirm first; on cancel, re-render from the untouched data so
+  // the card snaps back to where it started (same-day reordering saves without asking).
+  if(toDay !== fromDay){
+    const destIds0 = [...document.getElementById("tl"+toDay).querySelectorAll(".stop")].map(el=>+el.dataset.id);
+    const pos = destIds0.indexOf(d.id) + 1;
+    if(!confirm(`${DAYNAME[fromDay]}에서 ${DAYNAME[toDay]} ${pos}번째로 옮길까요?`)){
+      render();
+      return;
+    }
+  }
+
   const changed = [];
 
   // renumber the destination day from the DOM (this is where the dragged card now lives)
@@ -990,8 +1003,6 @@ async function endDrag(ev){
     DATA.sort((a,b)=> a.day-b.day || a.sort_order-b.sort_order);
     render(); buzz([12,40,12]);
     toast(toDay!==fromDay ? "다른 날짜로 옮겼어요 ✓" : "순서를 저장했어요 ✓","ok");
-    // only when moved to a different day, check whether another day is an even better fit
-    if(toDay !== fromDay){ await maybeSuggestMove(d.id); }
   }catch(err){ toast("저장 실패: "+err.message,"err"); render(); }
 }
 
