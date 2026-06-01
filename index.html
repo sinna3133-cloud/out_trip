@@ -56,12 +56,44 @@
   .nexttag{display:inline-block;font-size:10px;font-weight:700;color:var(--teal);background:#EAF3F0;border:1px solid #D5E7E2;border-radius:6px;padding:1px 7px;margin-left:auto;flex:0 0 auto;white-space:nowrap}
   .stop.isnext .card{border-color:#Bcdbd4}
 
-  .flights{margin-top:18px;background:var(--teal-deep);color:#F6EFE0;border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
+  .flights{margin-top:18px;background:var(--teal-deep);color:#F6EFE0;border-radius:18px;padding:16px 18px;box-shadow:var(--shadow);cursor:pointer;position:relative}
+  .flights .fledit{position:absolute;top:10px;right:12px;font-size:11px;color:#9FD3CE;opacity:.85}
   .flights .fl{display:flex;align-items:center;justify-content:space-between;font-size:14px;padding:7px 0}
   .flights .fl+.fl{border-top:1px dashed rgba(246,239,224,.25)}
   .flights .dir{font-size:11.5px;letter-spacing:1px;color:#9FD3CE;font-weight:700}
   .flights .rt{text-align:right}
   .flights .big{font-family:'Gowun Batang',serif;font-size:16px}
+
+  /* ---- gate + modal ---- */
+  .gate{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#176B68,#0E4F4C);
+       display:flex;align-items:center;justify-content:center;padding:24px}
+  .gate.hidden{display:none}
+  .gatecard{background:var(--cream);border-radius:22px;padding:26px 22px;width:100%;max-width:380px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+  .gatecard h2{font-family:'Gowun Batang',serif;font-size:22px;color:var(--ink);margin:0 0 4px}
+  .gatecard p{font-size:13px;color:var(--soft);margin:0 0 18px;line-height:1.5}
+  .famrow{display:grid;gap:10px;margin-bottom:16px}
+  .fambtn{font-family:inherit;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:14px;
+       padding:13px 15px;font-size:15px;color:var(--ink);cursor:pointer;font-weight:700;transition:border-color .15s}
+  .fambtn:active{background:#F2EAD8}
+  .fambtn.sel{border-color:var(--teal)}
+  .fambtn span{display:block;font-size:11.5px;color:var(--soft);font-weight:400;margin-top:2px}
+  .gatecard input.pw{width:100%;font-family:inherit;font-size:16px;padding:12px 14px;border:1.5px solid var(--line);
+       border-radius:12px;background:var(--card);color:var(--ink);box-sizing:border-box}
+  .gateerr{font-size:12.5px;color:#C0492C;margin-top:8px;min-height:16px}
+  .gatecard .btn.primary{width:100%;justify-content:center;margin-top:14px}
+
+  .modal{position:fixed;inset:0;z-index:210;background:rgba(20,18,15,.5);display:flex;align-items:center;justify-content:center;padding:22px}
+  .modal.hidden{display:none}
+  .modalcard{background:var(--cream);border-radius:20px;padding:22px 20px;width:100%;max-width:380px;box-shadow:0 18px 50px rgba(0,0,0,.3);max-height:88vh;overflow:auto}
+  .modalcard h2{font-family:'Gowun Batang',serif;font-size:20px;color:var(--ink);margin:0 0 4px}
+  .modalcard p{font-size:12.5px;color:var(--soft);margin:0 0 16px;line-height:1.5}
+  .modalcard label{display:block;font-size:12px;color:var(--soft);margin:12px 0 5px;font-weight:700}
+  .modalcard input{width:100%;font-family:inherit;font-size:15px;padding:10px 12px;border:1.5px solid var(--line);
+       border-radius:10px;background:var(--card);color:var(--ink);box-sizing:border-box}
+  .modalcard .two{display:flex;gap:10px}
+  .modalcard .two>div{flex:1}
+  .modalcard .rowbtns{display:flex;gap:10px;margin-top:18px}
+  .modalcard .rowbtns .btn{flex:1;justify-content:center}
 
   .nav{position:sticky;top:0;z-index:20;background:rgba(251,245,234,.92);backdrop-filter:blur(8px);
        margin:22px -16px 8px;padding:10px 16px;border-bottom:1px solid var(--line);
@@ -239,6 +271,65 @@
 </head>
 <body>
 
+<!-- ===== family gate (disabled — kept hidden) ===== -->
+<div class="gate hidden" id="gate">
+  <div class="gatecard">
+    <h2>여행 일정표</h2>
+    <p>어느 가족의 일정을 볼까요? 가족을 고르고 비밀번호를 입력하세요.</p>
+    <div class="famrow" id="famRow"></div>
+    <input class="pw" id="gatePw" type="password" inputmode="numeric" placeholder="비밀번호" autocomplete="off">
+    <div class="gateerr" id="gateErr"></div>
+    <button class="btn primary" id="gateGo" onclick="gateSubmit()">들어가기</button>
+  </div>
+</div>
+
+<!-- ===== trip setup popup (first entry for a new/empty family) ===== -->
+<div class="modal hidden" id="setupModal">
+  <div class="modalcard">
+    <h2>여행 정보 입력</h2>
+    <p>여행 제목과 기간을 적어주세요. 입력한 일수만큼 날짜(DAY)가 만들어져요.</p>
+    <label>여행 제목</label>
+    <input id="su_title" placeholder="예: 2026년 제주도 여름휴가">
+    <label>한 줄 소개 (선택)</label>
+    <input id="su_sub" placeholder="예: 친구네 가족 여행">
+    <div class="two">
+      <div><label>몇 박</label><input id="su_nights" type="number" min="0" max="29" inputmode="numeric" placeholder="3"></div>
+      <div><label>며칠</label><input id="su_days" type="number" min="1" max="30" inputmode="numeric" placeholder="4"></div>
+    </div>
+    <div class="rowbtns">
+      <button class="btn primary" onclick="saveSetup()">시작하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== flight edit popup ===== -->
+<div class="modal hidden" id="flightModal">
+  <div class="modalcard">
+    <h2>가는 편 / 오는 편</h2>
+    <p>항공편이나 교통편 정보를 적어주세요. 빈 칸은 화면에 표시되지 않아요.</p>
+    <label>가는 편 — 날짜·라벨</label>
+    <input id="fl_dlabel" placeholder="예: 가는 편 · 7/17 (금)">
+    <div class="two">
+      <div><label>구간</label><input id="fl_droute" placeholder="예: 인천 → 제주"></div>
+      <div><label>시간</label><input id="fl_dtime" placeholder="예: 18:00"></div>
+    </div>
+    <label>가는 편 — 메모 (선택)</label>
+    <input id="fl_dsub" placeholder="예: 제헌절 공휴일">
+    <label>오는 편 — 날짜·라벨</label>
+    <input id="fl_rlabel" placeholder="예: 오는 편 · 7/20 (월)">
+    <div class="two">
+      <div><label>구간</label><input id="fl_rroute" placeholder="예: 제주 → 인천"></div>
+      <div><label>시간</label><input id="fl_rtime" placeholder="예: 15:00"></div>
+    </div>
+    <label>오는 편 — 메모 (선택)</label>
+    <input id="fl_rsub" placeholder="예: 반납 1시간 전 도착">
+    <div class="rowbtns">
+      <button class="btn ghost" onclick="closeFlightEdit()">취소</button>
+      <button class="btn primary" onclick="saveFlights()">저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="wrap" id="app">
 
   <div class="topbar">
@@ -335,16 +426,17 @@
   </div>
 
   <header class="hero">
-    <div class="kicker">Jeju Family Trip</div>
-    <h1>2026년 제주도 여름휴가<span class="small">우리 세 식구의 3박 4일</span></h1>
-    <div class="flights">
-      <div class="fl">
-        <div><div class="dir">가는 편 · 7/17 (금)</div><div class="big">인천 → 제주</div></div>
-        <div class="rt"><div class="big">18:00</div><div class="dir">제헌절 공휴일</div></div>
+    <div class="kicker">Family Trip</div>
+    <h1 id="tripTitle">제주 가족여행<span class="small" id="tripSub"></span></h1>
+    <div class="flights" id="flightsCard" onclick="openFlightEdit()">
+      <span class="fledit">✎ 수정</span>
+      <div class="fl" id="flGo">
+        <div><div class="dir" id="flGoLabel"></div><div class="big" id="flGoRoute"></div></div>
+        <div class="rt"><div class="big" id="flGoTime"></div><div class="dir" id="flGoSub"></div></div>
       </div>
-      <div class="fl">
-        <div><div class="dir">오는 편 · 7/20 (월)</div><div class="big">제주 → 인천</div></div>
-        <div class="rt"><div class="big">15:00</div><div class="dir">반납 1시간 전 도착</div></div>
+      <div class="fl" id="flRet">
+        <div><div class="dir" id="flRetLabel"></div><div class="big" id="flRetRoute"></div></div>
+        <div class="rt"><div class="big" id="flRetTime"></div><div class="dir" id="flRetSub"></div></div>
       </div>
     </div>
   </header>
@@ -359,12 +451,7 @@
 
   <p class="edithint">장소를 누르면 수정·삭제할 수 있어요. 변경하면 가족 모두에게 반영돼요.</p>
 
-  <nav class="nav">
-    <a onclick="jump('d1')"><span class="d">DAY 1</span> 도착</a>
-    <a onclick="jump('d2')"><span class="d">DAY 2</span> 박물관·동물·숲</a>
-    <a onclick="jump('d3')"><span class="d">DAY 3</span> 성산·구좌</a>
-    <a onclick="jump('d4')"><span class="d">DAY 4</span> 해변·공항</a>
-  </nav>
+  <nav class="nav" id="nav"></nav>
 
   <div id="days"></div>
 
@@ -383,23 +470,57 @@ const SUPABASE_KEY = "sb_publishable_47gcgmB2wMOpm1tIrgn8hQ_OeTYpZWA";
 /* ============================================== */
 
 const REST = SUPABASE_URL + "/rest/v1/schedule";
+const META_REST = SUPABASE_URL + "/rest/v1/trip_meta";
 const HEAD = { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" };
-const DAYMETA = {
-  1:{t:"도착 · 공항 인근 1박", d:"7월 17일 (금)"},
-  2:{t:"박물관 · 동물체험 · 숲", d:"7월 18일 (토)"},
-  3:{t:"성산 · 구좌 한 바퀴", d:"7월 19일 (일)"},
-  4:{t:"해변 · 시장 · 공항", d:"7월 20일 (월)"}
+
+/* ===== families ===== */
+const FAMILIES = {
+  ours:   { label:"우리 가족", note:"제주 3박 4일", pw:"1234" },
+  friend: { label:"친구네",    note:"새 일정 만들기", pw:"5678" }
 };
-// calendar date for each trip day (local time)
-const DAYDATE = { 1:"2026-07-17", 2:"2026-07-18", 3:"2026-07-19", 4:"2026-07-20" };
+let FAMILY = null;          // current family key, set after gate
+const famFilter = ()=> "&family=eq." + encodeURIComponent(FAMILY);
+
+/* default trip settings for "우리 가족" (keeps the original look even without a DB meta row) */
+const OURS_META = {
+  title:"2026년 제주도 여름휴가", sub:"우리 세 식구의 3박 4일",
+  nights:3, days:4, start:"2026-07-17",
+  depart_label:"가는 편 · 7/17 (금)", depart_route:"인천 → 제주", depart_time:"18:00", depart_sub:"제헌절 공휴일",
+  return_label:"오는 편 · 7/20 (월)", return_route:"제주 → 인천", return_time:"15:00", return_sub:"반납 1시간 전 도착",
+  daymeta:{ 1:{t:"도착 · 공항 인근 1박", d:"7월 17일 (금)"}, 2:{t:"박물관 · 동물체험 · 숲", d:"7월 18일 (토)"},
+            3:{t:"성산 · 구좌 한 바퀴", d:"7월 19일 (일)"}, 4:{t:"해변 · 시장 · 공항", d:"7월 20일 (월)"} }
+};
+
+let META = null;            // active trip meta (from DB or defaults)
+let TRIP_DAYS = 4;          // number of days (dynamic)
+
+const WEEK = ["일","월","화","수","목","금","토"];
+function dayDateStr(dayNum){ // returns YYYY-MM-DD for a given trip day, or null if no start date
+  if(!META || !META.start) return null;
+  const d = new Date(META.start+"T00:00:00"); d.setDate(d.getDate()+(dayNum-1));
+  return ymdLocal(d);
+}
+function dayMeta(dayNum){
+  // prefer explicit daymeta (ours); else derive a generic label from the start date
+  if(META && META.daymeta && META.daymeta[dayNum]) return META.daymeta[dayNum];
+  const ds = dayDateStr(dayNum);
+  if(ds){ const d=new Date(ds+"T00:00:00"); return { t:"", d:(d.getMonth()+1)+"월 "+d.getDate()+"일 ("+WEEK[d.getDay()]+")" }; }
+  return { t:"", d:"" };
+}
+const DAYMETA = {  // kept for any legacy reference; now backed by dayMeta()
+  get 1(){return dayMeta(1);}, get 2(){return dayMeta(2);}, get 3(){return dayMeta(3);}, get 4(){return dayMeta(4);}
+};
+// calendar date for each trip day (local time) — now derived
+const DAYDATE = {};
 const TRIP_START = "2026-07-17", TRIP_END = "2026-07-20";
 
 function ymdLocal(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function updateDday(){
   const chip = document.getElementById("ddayChip"); if(!chip) return;
+  if(!META || !META.start){ chip.textContent=""; return; }   // no dates set → no badge
   const today = new Date(); today.setHours(0,0,0,0);
-  const start = new Date(TRIP_START+"T00:00:00");
-  const end = new Date(TRIP_END+"T00:00:00");
+  const start = new Date(META.start+"T00:00:00");
+  const end = new Date(start); end.setDate(end.getDate()+(TRIP_DAYS-1));
   const day = 24*60*60*1000;
   if(today < start){
     const n = Math.round((start - today)/day);
@@ -416,11 +537,12 @@ function updateDday(){
 /* Returns the id of the stop happening "now" (most recent past stop today),
    and the "next" upcoming stop. Only active during the trip dates. */
 function computeNowNext(){
+  if(!META || !META.start) return {nowId:null, nextId:null};
   const now = new Date();
   const todayStr = ymdLocal(now);
   // find which trip day is today (if any)
   let todayDay = null;
-  for(const d of [1,2,3,4]) if(DAYDATE[d]===todayStr) todayDay = d;
+  for(let d=1; d<=TRIP_DAYS; d++) if(dayDateStr(d)===todayStr) todayDay = d;
   if(todayDay===null) return {nowId:null, nextId:null};
   const mins = now.getHours()*60 + now.getMinutes();
   const stops = DATA.filter(r=>r.day===todayDay).sort((a,b)=>a.sort_order-b.sort_order);
@@ -475,36 +597,103 @@ async function load(){
   const diag = $("#diag");
   diag.className="diag load"; diag.innerHTML="<b>일정 불러오는 중…</b> 데이터베이스에 연결하고 있어요.";
   try{
-    const res = await fetch(REST + "?select=*&order=day.asc,sort_order.asc", { headers: HEAD });
+    // 1) load this family's trip meta
+    await loadMeta();
+    // 2) load this family's schedule
+    const res = await fetch(REST + "?select=*&order=day.asc,sort_order.asc" + famFilter(), { headers: HEAD });
     if(!res.ok){ throw new Error("HTTP " + res.status + " — " + (await res.text())); }
     DATA = await res.json();
+    applyMeta();
     if(DATA.length === 0){
-      diag.className="diag ok"; diag.innerHTML="<b>연결 성공!</b> 아직 일정이 비어 있어요. 아래 버튼으로 처음 일정을 채워넣으세요.";
-      $("#seedWrap").classList.remove("hidden");
+      // empty schedule. If this family has no meta yet, prompt setup. Otherwise just show empty days.
+      if(!META){ openSetup(); }
+      diag.className="diag hidden"; diag.innerHTML="";
     } else {
-      diag.className="diag hidden"; diag.innerHTML="";   // success: no banner needed
-      $("#seedWrap").classList.add("hidden");
+      diag.className="diag hidden"; diag.innerHTML="";
     }
+    $("#seedWrap").classList.add("hidden");
     render();
   }catch(err){
     diag.className="diag err";
-    diag.innerHTML="<b>연결 실패</b><br>"+esc(err.message)+"<br><br>설정의 URL·키를 다시 확인하거나, Supabase에서 schedule 표와 권한(policy)이 만들어졌는지 확인하세요.";
+    diag.innerHTML="<b>연결 실패</b><br>"+esc(err.message)+"<br><br>설정의 URL·키를 다시 확인하거나, Supabase에서 schedule·trip_meta 표와 권한(policy)이 만들어졌는지 확인하세요.";
   }
 }
+
+/* Load trip_meta for the active family. Falls back to OURS_META defaults for 'ours'. */
+async function loadMeta(){
+  META = null;
+  try{
+    const res = await fetch(META_REST + "?select=*&family=eq."+encodeURIComponent(FAMILY), { headers: HEAD });
+    if(res.ok){
+      const rows = await res.json();
+      if(rows && rows.length){
+        const r = rows[0];
+        META = {
+          title:r.title||"", sub:r.sub||"",
+          nights:r.nights, days:r.days||((r.nights||0)+1), start:r.start_date||null,
+          depart_label:r.depart_label||"", depart_route:r.depart_route||"", depart_time:r.depart_time||"", depart_sub:r.depart_sub||"",
+          return_label:r.return_label||"", return_route:r.return_route||"", return_time:r.return_time||"", return_sub:r.return_sub||"",
+          daymeta:null
+        };
+      }
+    }
+  }catch(e){ /* network issue → handled by caller's defaults */ }
+  // 'ours' keeps the original hard-coded look if no DB row exists yet
+  if(!META && FAMILY==="ours") META = JSON.parse(JSON.stringify(OURS_META));
+  TRIP_DAYS = META ? (META.days || ((META.nights||0)+1) || 1) : 4;
+}
+
+/* Fill header title, subtitle, and the flights card from META. */
+function applyMeta(){
+  const t = $("#tripTitle"), sub=$("#tripSub");
+  if(META){
+    // title text is the first text node; keep the <span> child
+    t.childNodes[0].nodeValue = META.title || "여행 일정표";
+    sub.textContent = META.sub || "";
+    TRIP_DAYS = META.days || ((META.nights||0)+1) || 1;
+    // flights
+    setFL("flGoLabel", META.depart_label); setFL("flGoRoute", META.depart_route);
+    setFL("flGoTime", META.depart_time); setFL("flGoSub", META.depart_sub);
+    setFL("flRetLabel", META.return_label); setFL("flRetRoute", META.return_route);
+    setFL("flRetTime", META.return_time); setFL("flRetSub", META.return_sub);
+    const goEmpty = !(META.depart_label||META.depart_route||META.depart_time);
+    const retEmpty = !(META.return_label||META.return_route||META.return_time);
+    $("#flGo").style.display = goEmpty ? "none" : "";
+    $("#flRet").style.display = retEmpty ? "none" : "";
+    $("#flightsCard").style.display = (goEmpty && retEmpty) ? "none" : "";
+  } else {
+    t.childNodes[0].nodeValue = "여행 일정표"; sub.textContent="";
+    $("#flightsCard").style.display = "none";
+  }
+}
+function setFL(id, v){ const el=document.getElementById(id); if(el) el.textContent = v||""; }
 
 /* ---------- render ---------- */
 function render(){
   updateDday();
   const nn = computeNowNext();
+  // build day-nav chips
+  const nav = $("#nav");
+  if(nav){
+    let nh = "";
+    for(let day=1; day<=TRIP_DAYS; day++){
+      const m = dayMeta(day);
+      nh += `<a onclick="jump('d${day}')"><span class="d">DAY ${day}</span> ${esc(m.t||m.d||(day+"일차"))}</a>`;
+    }
+    nav.innerHTML = nh;
+  }
   const wrap = $("#days");
   wrap.innerHTML = "";
-  for(const day of [1,2,3,4]){
+  for(let day=1; day<=TRIP_DAYS; day++){
     const stops = DATA.filter(r=>r.day===day);
     const sec = document.createElement("section");
     sec.className="day"; sec.id="d"+day;
-    const m = DAYMETA[day];
+    const m = dayMeta(day);
+    const metaHtml = (m.t || m.d)
+      ? `<div class="daymeta"><h2>${esc(m.t||("DAY "+day))}</h2><div class="date">${esc(m.d)}</div></div>`
+      : `<div class="daymeta"><h2>${day}일차</h2></div>`;
     sec.innerHTML = `<div class="dayhead"><div class="daynum">DAY ${day}</div>
-      <div class="daymeta"><h2>${esc(m.t)}</h2><div class="date">${esc(m.d)}</div></div></div>
+      ${metaHtml}</div>
       <div class="tl" id="tl${day}"></div>
       <div class="addstop"><button class="btn ghost" onclick="addStop(${day})">+ 장소 추가</button></div>`;
     wrap.appendChild(sec);
@@ -625,16 +814,42 @@ function beginDrag(id, startY){
   if(!stopEl) return;
   const day = +stopEl.dataset.day;
   const container = document.getElementById("tl"+day);
-  drag = { id, day, el: stopEl, container, startY, moved:false, lastBefore: undefined };
+  drag = { id, day, fromDay: day, el: stopEl, container, startY, moved:false, lastBefore: undefined };
   // close any open action bars while dragging
   document.querySelectorAll(".acts.open").forEach(el=>el.classList.remove("open"));
   stopEl.classList.add("dragging");
   document.body.classList.add("dragging-active");
   buzz(18); // pick-up feedback
 }
+
+/* Which day's timeline is the pointer currently over? Returns {day, container} or null. */
+function timelineAt(y){
+  for(let d=1; d<=TRIP_DAYS; d++){
+    const sec = document.getElementById("d"+d);
+    if(!sec) continue;
+    const r = sec.getBoundingClientRect();
+    if(y >= r.top && y <= r.bottom){ return { day:d, container: document.getElementById("tl"+d) }; }
+  }
+  return null;
+}
+
 function onDragMove(ev){
   if(!drag) return;
   if(Math.abs(ev.clientY - drag.startY) > 4) drag.moved = true;
+
+  // 1) figure out which day the pointer is over; switch container if it changed
+  const hit = timelineAt(ev.clientY);
+  if(hit && hit.container !== drag.container){
+    // entering a different day's timeline
+    const emptyNote = hit.container.querySelector(".note");
+    if(emptyNote) emptyNote.remove();           // clear "아직 장소가 없어요" placeholder
+    drag.container = hit.container;
+    drag.day = hit.day;
+    drag.lastBefore = undefined;
+    buzz(12);                                   // crossing into a new day
+  }
+
+  // 2) position within the current container
   const sibs = [...drag.container.querySelectorAll(".stop:not(.dragging)")];
   let placed = false, beforeId = null;
   for(const sib of sibs){
@@ -653,29 +868,47 @@ function onDragMove(ev){
   if(ev.clientY < m) window.scrollBy(0, -12);
   else if(ev.clientY > window.innerHeight - m) window.scrollBy(0, 12);
 }
+
 async function endDrag(ev){
   if(!drag) return;
   const d = drag; drag = null;
   d.el.classList.remove("dragging");
   document.body.classList.remove("dragging-active");
   if(!d.moved) return; // held but didn't move
-  const ids = [...d.container.querySelectorAll(".stop")].map(el=>+el.dataset.id);
+
+  const toDay = d.day, fromDay = d.fromDay;
   const changed = [];
-  ids.forEach((id, idx)=>{
+
+  // renumber the destination day from the DOM (this is where the dragged card now lives)
+  const destIds = [...document.getElementById("tl"+toDay).querySelectorAll(".stop")].map(el=>+el.dataset.id);
+  destIds.forEach((id, idx)=>{
     const row = DATA.find(r=>r.id===id);
-    if(row && row.sort_order !== idx+1){ row.sort_order = idx+1; changed.push(row); }
+    if(!row) return;
+    if(row.sort_order !== idx+1 || row.day !== toDay){
+      row.sort_order = idx+1; row.day = toDay; changed.push(row);
+    }
   });
+  // if it moved across days, also renumber the source day (a gap was left behind)
+  if(toDay !== fromDay){
+    const srcIds = [...document.getElementById("tl"+fromDay).querySelectorAll(".stop")].map(el=>+el.dataset.id);
+    srcIds.forEach((id, idx)=>{
+      const row = DATA.find(r=>r.id===id);
+      if(row && row.sort_order !== idx+1){ row.sort_order = idx+1; changed.push(row); }
+    });
+  }
+
   if(!changed.length) return;
   try{
     for(const row of changed){
       const res = await fetch(REST + "?id=eq."+row.id, { method:"PATCH",
         headers:{...HEAD,"Prefer":"return=minimal"},
-        body: JSON.stringify({ sort_order: row.sort_order, updated_at:new Date().toISOString() }) });
+        body: JSON.stringify({ day: row.day, sort_order: row.sort_order, updated_at:new Date().toISOString() }) });
       if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
     }
     DATA.sort((a,b)=> a.day-b.day || a.sort_order-b.sort_order);
-    render(); buzz([12,40,12]); toast("순서를 저장했어요 ✓","ok");
-  }catch(err){ toast("순서 저장 실패: "+err.message,"err"); render(); }
+    render(); buzz([12,40,12]);
+    toast(toDay!==fromDay ? "다른 날짜로 옮겼어요 ✓" : "순서를 저장했어요 ✓","ok");
+  }catch(err){ toast("저장 실패: "+err.message,"err"); render(); }
 }
 
 /* ---------- edit form ---------- */
@@ -811,7 +1044,7 @@ function computeBestDay(id, coord, currentDay){
   if(!coord) return null;
   const me = DATA.find(r=>r.id===id);
   let best=null, perDay=[], cur=null;
-  for(const day of [1,2,3,4]){
+  for(let day=1; day<=TRIP_DAYS; day++){
     const stops = DATA.filter(r=>r.day===day && r.id!==id).sort((a,b)=>a.sort_order-b.sort_order);
     const known = stops.map(s=>parseCoord(s.maps_query)).filter(Boolean);
     if(known.length===0){ perDay.push({day, addKm:null, pos:stops.length}); if(day===currentDay) cur={day, addKm:null, pos:stops.length}; continue; }
@@ -830,7 +1063,8 @@ function computeBestDay(id, coord, currentDay){
   return {best, perDay, cur};
 }
 
-const DAYNAME = {1:"1일차 (금)",2:"2일차 (토)",3:"3일차 (일)",4:"4일차 (월)"};
+function DAYNAME_(d){ const m=dayMeta(d); return d+"일차"+(m.d?(" ("+m.d.replace(/^.*\(|\).*$/g,"")+")"):""); }
+const DAYNAME = new Proxy({}, { get:(_,k)=> DAYNAME_(Number(k)) });
 
 async function persistOrder(day){
   const rows = DATA.filter(r=>r.day===day);
@@ -904,7 +1138,7 @@ async function maybeSuggestMove(id){
 async function addStop(day){
   const stops = DATA.filter(r=>r.day===day);
   const maxOrder = stops.length ? Math.max(...stops.map(s=>s.sort_order||0)) : 0;
-  const body = { day, sort_order: maxOrder+1, time_label:"", name:"새 장소", tag:"", note:"", hours:"", drive:"", maps_query:"", is_lodge:false };
+  const body = { day, sort_order: maxOrder+1, time_label:"", name:"새 장소", tag:"", note:"", hours:"", drive:"", maps_query:"", is_lodge:false, family: FAMILY };
   try{
     const res = await fetch(REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
     if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
@@ -945,7 +1179,7 @@ async function delStop(id){
       // re-insert (new id) preserving fields
       const body = { day:backup.day, sort_order:backup.sort_order, time_label:backup.time_label, name:backup.name,
                      tag:backup.tag, note:backup.note, hours:backup.hours, drive:backup.drive,
-                     maps_query:backup.maps_query, is_lodge:backup.is_lodge };
+                     maps_query:backup.maps_query, is_lodge:backup.is_lodge, family: FAMILY };
       try{
         const r2 = await fetch(REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
         if(!r2.ok) throw new Error("HTTP "+r2.status);
@@ -962,7 +1196,8 @@ const SEED = [{"day": 1, "sort_order": 1, "time_label": "19:10", "name": "제주
 $("#seedBtn").onclick = async ()=>{
   if(!confirm("지금 짠 일정 18곳을 데이터베이스에 넣을까요?")) return;
   try{
-    const res = await fetch(REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(SEED) });
+    const rows = SEED.map(r=>({...r, family: FAMILY}));
+    const res = await fetch(REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(rows) });
     if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
     toast("일정을 채웠어요 ✓","ok");
     load();
@@ -1008,7 +1243,7 @@ async function loadChecklist(){
   const diag = document.getElementById("clDiag");
   diag.className="cldiag"; diag.textContent="불러오는 중…";
   try{
-    const res = await fetch(CL_REST + "?select=*&order=done.asc,sort_order.asc,id.asc", { headers: HEAD });
+    const res = await fetch(CL_REST + "?select=*&order=done.asc,sort_order.asc,id.asc" + famFilter(), { headers: HEAD });
     if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
     CL_DATA = await res.json();
     clLoaded = true;
@@ -1066,7 +1301,7 @@ async function addCheck(){
   if(!text) return;
   const mine = CL_DATA.filter(x=>x.person===clPerson);
   const maxOrder = mine.length ? Math.max(...mine.map(x=>x.sort_order||0)) : 0;
-  const body = { person: clPerson, text, done:false, sort_order: maxOrder+1, is_default:false };
+  const body = { person: clPerson, text, done:false, sort_order: maxOrder+1, is_default:false, family: FAMILY };
   inp.value = "";
   try{
     const res = await fetch(CL_REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
@@ -1087,7 +1322,7 @@ async function toggleDefaults(){
       const mine = CL_DATA.filter(x=>x.person===clPerson);
       let order = mine.length ? Math.max(...mine.map(x=>x.sort_order||0)) : 0;
       const rows = (DEFAULTS[clPerson]||[]).filter(t=>!existing.has(t))
-        .map(t=>({ person:clPerson, text:t, done:false, sort_order:++order, is_default:true }));
+        .map(t=>({ person:clPerson, text:t, done:false, sort_order:++order, is_default:true, family: FAMILY }));
       if(rows.length===0){ btn.disabled=false; renderChecklist(); return; }
       const res = await fetch(CL_REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(rows) });
       if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
@@ -1096,7 +1331,7 @@ async function toggleDefaults(){
       buzz(12); toast("기본 준비물을 불러왔어요 ✓","ok");
     }else{
       // remove only the default-sourced items for this person
-      const res = await fetch(CL_REST + "?person=eq."+encodeURIComponent(clPerson)+"&is_default=eq.true", { method:"DELETE", headers: HEAD });
+      const res = await fetch(CL_REST + "?person=eq."+encodeURIComponent(clPerson)+"&is_default=eq.true"+famFilter(), { method:"DELETE", headers: HEAD });
       if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
       CL_DATA = CL_DATA.filter(x=>!(x.person===clPerson && x.is_default));
       buzz(12); toast("기본 준비물을 뺐어요","ok");
@@ -1124,7 +1359,7 @@ async function delCheck(id){
     if(!res.ok) throw new Error("HTTP "+res.status);
     CL_DATA = CL_DATA.filter(x=>x.id!==id); renderChecklist();
     undoToast("삭제됐어요", async ()=>{
-      const body = { person:backup.person, text:backup.text, done:backup.done, sort_order:backup.sort_order, is_default:backup.is_default };
+      const body = { person:backup.person, text:backup.text, done:backup.done, sort_order:backup.sort_order, is_default:backup.is_default, family: FAMILY };
       try{
         const r2 = await fetch(CL_REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
         if(!r2.ok) throw new Error("HTTP "+r2.status);
@@ -1137,8 +1372,110 @@ async function delCheck(id){
 
 document.getElementById("clInput").addEventListener("keydown", e=>{ if(e.key==="Enter") addCheck(); });
 
-/* load immediately */
+/* ===================== GATE (family + password) ===================== */
+let gateSel = null;
+function buildGate(){
+  const row = $("#famRow");
+  row.innerHTML = Object.keys(FAMILIES).map(k=>{
+    const f = FAMILIES[k];
+    return `<button class="fambtn" data-fam="${k}" onclick="pickFam('${k}')">${esc(f.label)}<span>${esc(f.note)}</span></button>`;
+  }).join("");
+}
+function pickFam(k){
+  gateSel = k;
+  document.querySelectorAll(".fambtn").forEach(b=> b.classList.toggle("sel", b.dataset.fam===k));
+  $("#gateErr").textContent = "";
+  $("#gatePw").focus();
+}
+function gateSubmit(){
+  const err = $("#gateErr");
+  if(!gateSel){ err.textContent = "먼저 가족을 선택하세요."; return; }
+  const pw = $("#gatePw").value.trim();
+  if(pw !== FAMILIES[gateSel].pw){ err.textContent = "비밀번호가 맞지 않아요."; return; }
+  FAMILY = gateSel;
+  try{ sessionStorage.setItem("fam", FAMILY); }catch(e){}
+  $("#gate").classList.add("hidden");
+  load();
+  if(!clLoaded){ /* checklist will load on first open */ }
+}
+$("#gatePw").addEventListener("keydown", e=>{ if(e.key==="Enter") gateSubmit(); });
+
+/* ===================== SETUP popup (new family's first entry) ===================== */
+function openSetup(){
+  $("#su_title").value = ""; $("#su_sub").value = "";
+  $("#su_nights").value = ""; $("#su_days").value = "";
+  $("#setupModal").classList.remove("hidden");
+  // keep days = nights + 1 in sync as a helpful default
+  $("#su_nights").oninput = ()=>{ const n=parseInt($("#su_nights").value,10); if(!isNaN(n)) $("#su_days").value = n+1; };
+}
+async function saveSetup(){
+  const title = $("#su_title").value.trim() || "우리 여행";
+  const sub = $("#su_sub").value.trim();
+  let nights = parseInt($("#su_nights").value,10); if(isNaN(nights)||nights<0) nights = 0;
+  let days = parseInt($("#su_days").value,10); if(isNaN(days)||days<1) days = nights+1;
+  if(days>30) days = 30;
+  const body = {
+    family: FAMILY, title, sub, nights, days, start_date:null,
+    depart_label:"", depart_route:"", depart_time:"", depart_sub:"",
+    return_label:"", return_route:"", return_time:"", return_sub:"",
+    updated_at: new Date().toISOString()
+  };
+  try{
+    const res = await fetch(META_REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
+    if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    const [row] = await res.json();
+    META = { title:row.title, sub:row.sub, nights:row.nights, days:row.days, start:row.start_date,
+             depart_label:"",depart_route:"",depart_time:"",depart_sub:"",
+             return_label:"",return_route:"",return_time:"",return_sub:"", daymeta:null };
+    TRIP_DAYS = META.days;
+    $("#setupModal").classList.add("hidden");
+    applyMeta(); render();
+    toast("여행을 만들었어요 ✓ 이제 장소를 추가해 보세요.","ok");
+  }catch(err){ toast("저장 실패: "+err.message,"err"); }
+}
+
+/* ===================== FLIGHT edit popup ===================== */
+function openFlightEdit(){
+  if(!META){ toast("먼저 여행 정보를 입력하세요","err"); return; }
+  $("#fl_dlabel").value = META.depart_label||""; $("#fl_droute").value = META.depart_route||"";
+  $("#fl_dtime").value = META.depart_time||"";   $("#fl_dsub").value = META.depart_sub||"";
+  $("#fl_rlabel").value = META.return_label||""; $("#fl_rroute").value = META.return_route||"";
+  $("#fl_rtime").value = META.return_time||"";   $("#fl_rsub").value = META.return_sub||"";
+  $("#flightModal").classList.remove("hidden");
+}
+function closeFlightEdit(){ $("#flightModal").classList.add("hidden"); }
+async function saveFlights(){
+  const patch = {
+    depart_label:$("#fl_dlabel").value.trim(), depart_route:$("#fl_droute").value.trim(),
+    depart_time:$("#fl_dtime").value.trim(),   depart_sub:$("#fl_dsub").value.trim(),
+    return_label:$("#fl_rlabel").value.trim(), return_route:$("#fl_rroute").value.trim(),
+    return_time:$("#fl_rtime").value.trim(),   return_sub:$("#fl_rsub").value.trim(),
+    updated_at: new Date().toISOString()
+  };
+  try{
+    // upsert: try PATCH first; if no row exists, POST
+    let res = await fetch(META_REST + "?family=eq."+encodeURIComponent(FAMILY), { method:"PATCH", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(patch) });
+    let rows = res.ok ? await res.json() : [];
+    if(res.ok && rows.length===0){
+      // no meta row yet → create one
+      const body = { family:FAMILY, title:(META&&META.title)||"우리 여행", sub:(META&&META.sub)||"",
+                     nights:(META&&META.nights)||0, days:TRIP_DAYS, start_date:(META&&META.start)||null, ...patch };
+      res = await fetch(META_REST, { method:"POST", headers:{...HEAD,"Prefer":"return=representation"}, body: JSON.stringify(body) });
+      if(!res.ok) throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    } else if(!res.ok){
+      throw new Error("HTTP "+res.status+" — "+(await res.text()));
+    }
+    Object.assign(META, patch);
+    closeFlightEdit(); applyMeta();
+    toast("저장됐어요 ✓","ok");
+  }catch(err){ toast("저장 실패: "+err.message,"err"); }
+}
+
+/* ===================== INIT ===================== */
+// 가족 구분 없이 바로 우리 가족 일정을 보여줍니다.
+FAMILY = "ours";
 load();
+
 </script>
 </body>
 </html>
